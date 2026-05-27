@@ -2,7 +2,6 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>SEMRA C.C.</title>
 
 <!-- ✅ PWA -->
@@ -74,7 +73,11 @@ button {
     line-height:1.6;
 }
 
-#map { height:300px; margin-top:15px; border-radius:6px; }
+#map {
+    height:300px;
+    margin-top:15px;
+    border-radius:6px;
+}
 
 .signature {
     position:absolute;
@@ -84,14 +87,13 @@ button {
     color:#888;
 }
 </style>
-
 </head>
 
 <body>
 
 <div class="header">
-<img src="https://www.semra.ie/wp-content/uploads/2021/10/semra_logo_196x221_transparent.png" class="logo">
-<div>SEMRA C.C.</div>
+    <img src="https://www.semra.ie/wp-content/uploads/2021/10/semra_logo_196x221_transparent.png" class="logo">
+    <div>SEMRA C.C.</div>
 </div>
 
 <div class="container">
@@ -112,11 +114,11 @@ button {
 
 <script>
 
-// projections
+// ✅ PROJECTIONS
 proj4.defs("EPSG:4326","+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:29903","+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=1.000035 +x_0=200000 +y_0=250000 +ellps=airy");
 
-// map
+// ✅ MAP INIT
 let map = L.map('map').setView([53.4,-8],7);
 
 L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
@@ -125,7 +127,7 @@ L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
 
 let marker;
 
-// grid letter
+// ✅ GRID LETTER
 function getGridLetter(E,N){
     const grid=[
         ['V','W','X','Y','Z'],
@@ -137,7 +139,7 @@ function getGridLetter(E,N){
     return grid[Math.floor(N/100000)][Math.floor(E/100000)];
 }
 
-// parser
+// ✅ PARSER
 function parse(input){
 
     input=input.toUpperCase().trim();
@@ -160,7 +162,7 @@ function parse(input){
     return null;
 }
 
-// timestamp
+// ✅ TIMESTAMP
 function getTimestamp(){
     return new Date().toLocaleString('en-IE',{
         day:'2-digit',month:'short',year:'numeric',
@@ -168,7 +170,7 @@ function getTimestamp(){
     });
 }
 
-// WhatsApp
+// ✅ WHATSAPP
 function shareWhatsApp(lat,lon,grid){
     let msg = `Irish Grid: ${grid}
 Decimal: ${lat.toFixed(6)}, ${lon.toFixed(6)}
@@ -179,7 +181,7 @@ https://maps.google.com/?q=${lat},${lon}`;
     window.open("https://wa.me/?text=" + encodeURIComponent(msg));
 }
 
-// ✅ ANDROID FIXED SCREENSHOT
+// ✅ SCREENSHOT (ANDROID FIX)
 function saveScreenshot(){
 
     map.invalidateSize();
@@ -191,19 +193,17 @@ function saveScreenshot(){
             scale:2
         }).then(canvas=>{
 
-            canvas.toBlob(blob => {
+            canvas.toBlob(blob=>{
 
-                let file = new File([blob], "SEMRA_location.png", {type:"image/png"});
+                let file=new File([blob],"SEMRA_location.png",{type:"image/png"});
 
-                if (navigator.share && navigator.canShare && navigator.canShare({files:[file]})) {
-
+                if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
                     navigator.share({
                         files:[file],
                         title:"SEMRA Location"
                     });
-
                 } else {
-                    let url = URL.createObjectURL(blob);
+                    let url=URL.createObjectURL(blob);
                     window.open(url);
                 }
 
@@ -214,7 +214,7 @@ function saveScreenshot(){
     },400);
 }
 
-// main
+// ✅ MAIN
 function convert(){
 
     let res=parse(input.value);
@@ -255,12 +255,11 @@ function convert(){
     `;
 
     map.setView([lat,lon],13);
-
     if(marker) marker.setLatLng([lat,lon]);
     else marker=L.marker([lat,lon]).addTo(map);
 }
 
-// reset
+// ✅ RESET
 function resetTool(){
     input.value="";
     result.innerHTML="";
