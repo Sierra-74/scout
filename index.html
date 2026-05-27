@@ -202,18 +202,53 @@ function saveScreenshot(){
             scale:2
         }).then(canvas=>{
 
-            let img = canvas.toDataURL("image/png");
+            canvas.toBlob(blob => {
 
-            let newTab = window.open();
-            newTab.document.body.style.margin = "0";
-            newTab.document.body.style.background = "#000";
+                let file = new File([blob], "SEMRA_location.png", {
+                    type: "image/png"
+                });
 
-            let image = new Image();
-            image.src = img;
-            image.style.width = "100%";
+                // ✅ Try native share (ANDROID WORKS HERE)
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
 
-            newTab.document.body.appendChild(image);
+                    navigator.share({
+                        files: [file],
+                        title: "SEMRA Location"
+                    }).catch(()=>{
 
+                        // fallback if user cancels
+                        openImage(blob);
+
+                    });
+
+                } else {
+
+                    // ✅ fallback
+                    openImage(blob);
+
+                }
+
+            });
+
+        });
+
+    },400);
+}
+
+function openImage(blob){
+
+    let url = URL.createObjectURL(blob);
+
+    let newTab = window.open();
+    newTab.document.body.style.margin = "0";
+    newTab.document.body.style.background = "#000";
+
+    let img = new Image();
+    img.src = url;
+    img.style.width = "100%";
+
+    newTab.document.body.appendChild(img);
+}
         });
 
     },400);
