@@ -8,8 +8,8 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c3e50">
 
-<!-- ✅ Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<!-- ✅ Leaflet (CORRECT TAGS) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <!-- ✅ Proj4 -->
@@ -127,6 +127,22 @@ L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
 
 let marker;
 
+// ✅ CONVERSIONS
+function toDMS(deg, lat){
+    let d=Math.floor(Math.abs(deg));
+    let m=Math.floor((Math.abs(deg)-d)*60);
+    let s=(((Math.abs(deg)-d)*60-m)*60).toFixed(2);
+    let dir=lat?(deg>=0?"N":"S"):(deg>=0?"E":"W");
+    return `${d}° ${m}' ${s}" ${dir}`;
+}
+
+function toDMM(deg, lat){
+    let d=Math.floor(Math.abs(deg));
+    let m=((Math.abs(deg)-d)*60).toFixed(4);
+    let dir=lat?(deg>=0?"N":"S"):(deg>=0?"E":"W");
+    return `${d}° ${m}' ${dir}`;
+}
+
 // ✅ GRID LETTER
 function getGridLetter(E,N){
     const grid=[
@@ -172,12 +188,11 @@ function getTimestamp(){
 
 // ✅ WHATSAPP
 function shareWhatsApp(lat,lon,grid){
-    let msg = `Irish Grid: ${grid}
+    let msg=`Irish Grid: ${grid}
 Decimal: ${lat.toFixed(6)}, ${lon.toFixed(6)}
 Time: ${getTimestamp()}
 
 https://maps.google.com/?q=${lat},${lon}`;
-
     window.open("https://wa.me/?text=" + encodeURIComponent(msg));
 }
 
@@ -187,30 +202,21 @@ function saveScreenshot(){
     map.invalidateSize();
 
     setTimeout(()=>{
-
         html2canvas(document.getElementById("captureArea"),{
             useCORS:true,
             scale:2
         }).then(canvas=>{
-
             canvas.toBlob(blob=>{
-
                 let file=new File([blob],"SEMRA_location.png",{type:"image/png"});
 
                 if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-                    navigator.share({
-                        files:[file],
-                        title:"SEMRA Location"
-                    });
+                    navigator.share({files:[file], title:"SEMRA Location"});
                 } else {
                     let url=URL.createObjectURL(blob);
                     window.open(url);
                 }
-
             });
-
         });
-
     },400);
 }
 
@@ -240,13 +246,15 @@ function convert(){
 
     <br><b>Decimal</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}
 
+    <br><b>DMS</b><br>${toDMS(lat,true)}<br>${toDMS(lon,false)}
+
+    <br><b>DMM</b><br>${toDMM(lat,true)}<br>${toDMM(lon,false)}
+
     <br><br>
 
-    <button onclick="shareWhatsApp(${lat},${lon},'${grid}')">
-    Share via WhatsApp</button>
+    <button onclick="shareWhatsApp(${lat},${lon},'${grid}')">Share via WhatsApp</button>
 
-    <button onclick="saveScreenshot()">
-    Share / Save Screenshot</button>
+    <button onclick="saveScreenshot()">Share / Save Screenshot</button>
 
     <button onclick="window.open('https://maps.google.com/?q=${lat},${lon}')">
     Open Google Maps</button>
@@ -255,6 +263,7 @@ function convert(){
     `;
 
     map.setView([lat,lon],13);
+
     if(marker) marker.setLatLng([lat,lon]);
     else marker=L.marker([lat,lon]).addTo(map);
 }
@@ -271,4 +280,3 @@ function resetTool(){
 
 </body>
 </html>
-``
