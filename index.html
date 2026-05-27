@@ -2,13 +2,14 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>SEMRA Coordinate Converter</title>
 
 <!-- ✅ PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c3e50">
 
-<!-- ✅ Leaflet (CORRECT TAGS) -->
+<!-- ✅ Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -87,6 +88,7 @@ button {
     color:#888;
 }
 </style>
+
 </head>
 
 <body>
@@ -114,11 +116,20 @@ button {
 
 <script>
 
+// ✅ FORCE APP UPDATE (VERY IMPORTANT)
+window.addEventListener('load', () => {
+    if ('caches' in window) {
+        caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+        });
+    }
+});
+
 // ✅ PROJECTIONS
 proj4.defs("EPSG:4326","+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:29903","+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=1.000035 +x_0=200000 +y_0=250000 +ellps=airy");
 
-// ✅ MAP INIT
+// ✅ MAP
 let map = L.map('map').setView([53.4,-8],7);
 
 L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
@@ -127,7 +138,7 @@ L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
 
 let marker;
 
-// ✅ CONVERSIONS
+// ✅ FORMATTERS
 function toDMS(deg, lat){
     let d=Math.floor(Math.abs(deg));
     let m=Math.floor((Math.abs(deg)-d)*60);
@@ -193,10 +204,11 @@ Decimal: ${lat.toFixed(6)}, ${lon.toFixed(6)}
 Time: ${getTimestamp()}
 
 https://maps.google.com/?q=${lat},${lon}`;
+
     window.open("https://wa.me/?text=" + encodeURIComponent(msg));
 }
 
-// ✅ SCREENSHOT (ANDROID FIX)
+// ✅ SCREENSHOT (ANDROID SHARE FIX)
 function saveScreenshot(){
 
     map.invalidateSize();
@@ -210,7 +222,10 @@ function saveScreenshot(){
                 let file=new File([blob],"SEMRA_location.png",{type:"image/png"});
 
                 if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-                    navigator.share({files:[file], title:"SEMRA Location"});
+                    navigator.share({
+                        files:[file],
+                        title:"SEMRA Location"
+                    });
                 } else {
                     let url=URL.createObjectURL(blob);
                     window.open(url);
@@ -246,15 +261,21 @@ function convert(){
 
     <br><b>Decimal</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}
 
-    <br><b>DMS</b><br>${toDMS(lat,true)}<br>${toDMS(lon,false)}
+    <br><b>DMS</b><br>
+    ${toDMS(lat,true)}<br>
+    ${toDMS(lon,false)}
 
-    <br><b>DMM</b><br>${toDMM(lat,true)}<br>${toDMM(lon,false)}
+    <br><b>DMM</b><br>
+    ${toDMM(lat,true)}<br>
+    ${toDMM(lon,false)}
 
     <br><br>
 
-    <button onclick="shareWhatsApp(${lat},${lon},'${grid}')">Share via WhatsApp</button>
+    <button onclick="shareWhatsApp(${lat},${lon},'${grid}')">
+    Share via WhatsApp</button>
 
-    <button onclick="saveScreenshot()">Share / Save Screenshot</button>
+    <button onclick="saveScreenshot()">
+    Share / Save Screenshot</button>
 
     <button onclick="window.open('https://maps.google.com/?q=${lat},${lon}')">
     Open Google Maps</button>
@@ -280,3 +301,4 @@ function resetTool(){
 
 </body>
 </html>
+``
