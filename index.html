@@ -2,21 +2,15 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SEMRA C.C.</title>
 
-<title>SEMRA Coordinate Converter</title>
-
-<!-- ✅ PWA -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c3e50">
 
-<!-- ✅ Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<!-- ✅ Proj4 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-
-<!-- ✅ Screenshot -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
@@ -30,7 +24,6 @@ body { margin:0; font-family:Arial; background:#eef2f6; }
     align-items:center;
     justify-content:center;
     gap:10px;
-    font-size:18px;
 }
 
 .logo { height:40px; }
@@ -49,8 +42,6 @@ textarea {
     height:70px;
     padding:10px;
     font-size:16px;
-    border-radius:6px;
-    border:1px solid #ccc;
 }
 
 button {
@@ -61,7 +52,6 @@ button {
     color:white;
     border:none;
     border-radius:6px;
-    font-size:16px;
 }
 
 .reset { background:#666; }
@@ -70,15 +60,9 @@ button {
     margin-top:15px;
     padding:15px;
     background:#f9f9f9;
-    border-radius:6px;
-    line-height:1.6;
 }
 
-#map {
-    height:300px;
-    margin-top:15px;
-    border-radius:6px;
-}
+#map { height:300px; margin-top:15px; }
 
 .signature {
     position:absolute;
@@ -93,14 +77,14 @@ button {
 <body>
 
 <div class="header">
-    <img src="https://www.semra.ie/wp-content/uploads/2021/10/semra_logo_196x221_transparent.png" class="logo">
-    <div>SEMRA Coordinate Converter</div>
+<img src="https://www.semra.ie/wp-content/uploads/2021/10/semra_logo_196x221_transparent.png" class="logo">
+<div>SEMRA C.C.</div>
 </div>
 
 <div class="container">
 <div class="panel" id="captureArea">
 
-<textarea id="input" placeholder="Enter or paste coordinates (Lat/Lon or Irish Grid)"></textarea>
+<textarea id="input" placeholder="Enter or paste coordinates"></textarea>
 
 <button onclick="convert()">Convert & Locate</button>
 <button class="reset" onclick="resetTool()">Reset</button>
@@ -115,30 +99,17 @@ button {
 
 <script>
 
-// ✅ FORCE CACHE CLEAR (fix update issue)
-window.addEventListener('load', () => {
-    if ('caches' in window) {
-        caches.keys().then(names => {
-            names.forEach(name => caches.delete(name));
-        });
-    }
-});
-
-// ✅ PROJECTIONS
+// projections
 proj4.defs("EPSG:4326","+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:29903","+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=1.000035 +x_0=200000 +y_0=250000 +ellps=airy");
 
-// ✅ MAP
+// map
 let map = L.map('map').setView([53.4,-8],7);
-
-L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
-    maxZoom:17
-}).addTo(map);
-
+L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17}).addTo(map);
 let marker;
 
-// ✅ FORMATTERS
-function toDMS(deg, lat){
+// formatters
+function toDMS(deg,lat){
     let d=Math.floor(Math.abs(deg));
     let m=Math.floor((Math.abs(deg)-d)*60);
     let s=(((Math.abs(deg)-d)*60-m)*60).toFixed(2);
@@ -146,14 +117,14 @@ function toDMS(deg, lat){
     return `${d}° ${m}' ${s}" ${dir}`;
 }
 
-function toDMM(deg, lat){
+function toDMM(deg,lat){
     let d=Math.floor(Math.abs(deg));
     let m=((Math.abs(deg)-d)*60).toFixed(4);
     let dir=lat?(deg>=0?"N":"S"):(deg>=0?"E":"W");
     return `${d}° ${m}' ${dir}`;
 }
 
-// ✅ GRID LETTER
+// grid letter
 function getGridLetter(E,N){
     const grid=[
         ['V','W','X','Y','Z'],
@@ -165,13 +136,45 @@ function getGridLetter(E,N){
     return grid[Math.floor(N/100000)][Math.floor(E/100000)];
 }
 
-// ✅ ✅ FIXED PARSER (CRITICAL FIX)
+// ✅ PARSER WITH TYPE + ACCURACY
 function parse(input){
 
-    input=input.toUpperCase().trim();
+    input=input.toUpperCase()
+    .replace(/_/g," ")
+    .replace(/[°'"]/g," ")
+    .replace(/\s+/g," ")
+    .trim();
 
+    // DMS
+    let comp=input.match(/(\d{3,4})\s+([\d.]+)\s*([NS]).+?(\d{3,4})\s+([\d.]+)\s*([EW])/);
+    if(comp){
+        let lat=Math.floor(comp[1]/100)+(comp[1]%100)/60+comp[2]/3600;
+        let lon=Math.floor(comp[4]/100)+(comp[4]%100)/60+comp[5]/3600;
+        if(comp[3]=="S") lat*=-1;
+        if(comp[6]=="W") lon*=-1;
+        return {lat,lon,type:"DMS",acc:"±5m"};
+    }
+
+    // DMM
+    let dmm=input.match(/([NS])\s*(\d+)\s+([\d.]+).+?([EW])\s*(\d+)\s+([\d.]+)/);
+    if(dmm){
+        let lat=(+dmm[2])+(+dmm[3]/60);
+        let lon=(+dmm[5])+(+dmm[6]/60);
+        if(dmm[1]=="S") lat*=-1;
+        if(dmm[4]=="W") lon*=-1;
+        return {lat,lon,type:"DMM",acc:"±30m"};
+    }
+
+    // Decimal
+    let dec=input.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
+    if(dec){
+        let precision = dec[1].split(".")[1].length;
+        let acc = precision>=6 ? "±1m" : "±10m";
+        return {lat:+dec[1],lon:+dec[2],type:"Decimal",acc};
+    }
+
+    // Irish Grid
     let grid=input.match(/^([A-Z])\s*(\d+)\s*(\d+)/);
-
     if(grid){
         const letters="VWXYZQRSTULMNOPFGHJKABCDE";
         let idx=letters.indexOf(grid[1]);
@@ -179,68 +182,22 @@ function parse(input){
         let e100=idx%5;
         let n100=Math.floor(idx/5);
 
-        let eStr=grid[2];
-        let nStr=grid[3];
+        let scale=Math.pow(10,5-grid[2].length);
 
-        let scale=Math.pow(10,5-eStr.length);
-
-        let E=e100*100000 + Number(eStr)*scale;
-        let N=n100*100000 + Number(nStr)*scale;
+        let E=e100*100000+Number(grid[2])*scale;
+        let N=n100*100000+Number(grid[3])*scale;
 
         let coords=proj4("EPSG:29903","EPSG:4326",[E-50,N+19]);
 
-        return {lat:coords[1],lon:coords[0]};
-    }
+        let acc = ["±1000m","±100m","±10m","±1m"][grid[2].length-2];
 
-    let dec=input.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
-    if(dec) return {lat:+dec[1],lon:+dec[2]};
+        return {lat:coords[1],lon:coords[0],type:"Irish Grid",acc};
+    }
 
     return null;
 }
 
-// ✅ TIMESTAMP
-function getTimestamp(){
-    return new Date().toLocaleString('en-IE',{
-        day:'2-digit',month:'short',year:'numeric',
-        hour:'2-digit',minute:'2-digit'
-    });
-}
-
-// ✅ WHATSAPP
-function shareWhatsApp(lat,lon,grid){
-    let msg=`Irish Grid: ${grid}
-Decimal: ${lat.toFixed(6)}, ${lon.toFixed(6)}
-Time: ${getTimestamp()}
-
-https://maps.google.com/?q=${lat},${lon}`;
-
-    window.open("https://wa.me/?text=" + encodeURIComponent(msg));
-}
-
-// ✅ SCREENSHOT
-function saveScreenshot(){
-
-    map.invalidateSize();
-
-    setTimeout(()=>{
-        html2canvas(document.getElementById("captureArea"),{
-            useCORS:true,
-            scale:2
-        }).then(canvas=>{
-            canvas.toBlob(blob=>{
-                let file=new File([blob],"SEMRA_location.png",{type:"image/png"});
-
-                if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
-                    navigator.share({files:[file],title:"SEMRA Location"});
-                } else {
-                    window.open(URL.createObjectURL(blob));
-                }
-            });
-        });
-    },400);
-}
-
-// ✅ MAIN
+// main
 function convert(){
 
     let res=parse(input.value);
@@ -250,19 +207,19 @@ function convert(){
         return;
     }
 
-    let lat=res.lat;
-    let lon=res.lon;
+    let lat=res.lat, lon=res.lon;
 
     let g=proj4("EPSG:4326","EPSG:29903",[lon,lat]);
-    let E=g[0]+50;
-    let N=g[1]-19;
+    let E=g[0]+50, N=g[1]-19;
 
     let grid=`${getGridLetter(E,N)} ${Math.round(E%100000)} ${Math.round(N%100000)}`;
 
     result.innerHTML=`
     <div class="result">
 
-    <b>Irish Grid</b><br>${grid}
+    <b>Detected:</b> ${res.type} | <b>Accuracy:</b> ${res.acc}
+
+    <br><br><b>Irish Grid</b><br>${grid}
 
     <br><b>Decimal</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}
 
@@ -270,30 +227,19 @@ function convert(){
 
     <br><b>DMM</b><br>${toDMM(lat,true)}<br>${toDMM(lon,false)}
 
-    <br><br>
-
-    <button onclick="shareWhatsApp(${lat},${lon},'${grid}')">
-    Share via WhatsApp</button>
-
-    <button onclick="saveScreenshot()">Share / Save Screenshot</button>
-
-    <button onclick="window.open('https://maps.google.com/?q=${lat},${lon}')">
-    Open Google Maps</button>
-
     </div>
     `;
 
     map.setView([lat,lon],13);
-
     if(marker) marker.setLatLng([lat,lon]);
     else marker=L.marker([lat,lon]).addTo(map);
 }
 
-// ✅ RESET
+// reset
 function resetTool(){
     input.value="";
     result.innerHTML="";
-    if(marker){ map.removeLayer(marker); marker=null; }
+    if(marker) map.removeLayer(marker);
     map.setView([53.4,-8],7);
 }
 
@@ -301,4 +247,3 @@ function resetTool(){
 
 </body>
 </html>
-``
