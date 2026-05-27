@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2c3e50">
-<link rel="apple-touch-icon" href="icon.png">
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SEMRA Coordinate Converter</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<title>SEMRA C.C.</title>
+
+<!-- ✅ CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<!-- ✅ JS LIBRARIES -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -61,7 +61,6 @@ button {
     padding:15px;
     background:#f9f9f9;
     border-radius:6px;
-    line-height:1.6;
 }
 
 #map { height:300px; margin-top:15px; }
@@ -74,13 +73,14 @@ button {
     color:#888;
 }
 </style>
+
 </head>
 
 <body>
 
 <div class="header">
-<img src="https://www.semra.ie/wp-content/uploads/2021/10/semra_logo_196x221_transparent.png" class="logo">
-<div>SEMRA Coordinate Converter</div>
+    <img src="https://www.semra.ie/wp-content/uploads/2021/10/semra_logo_196x221_transparent.png" class="logo">
+    <div>SEMRA C.C.</div>
 </div>
 
 <div class="container">
@@ -103,13 +103,15 @@ button {
 
 // projections
 proj4.defs("EPSG:4326","+proj=longlat +datum=WGS84 +no_defs");
-proj4.defs("EPSG:29903","+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=1.000035 +x_0=200000 +y_0=250000 +ellps=airy");
+proj4.defs("EPSG:29903",
+"+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=1.000035 +x_0=200000 +y_0=250000 +ellps=airy");
 
 // map
 let map = L.map('map').setView([53.4,-8],7);
 
-let topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17});
-topo.addTo(map);
+L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
+    maxZoom:17
+}).addTo(map);
 
 let marker;
 
@@ -158,54 +160,63 @@ function parse(input){
         return {lat:coords[1],lon:coords[0]};
     }
 
-    let dec=input.match(/(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/);
+    let dec=input.match(/(-?\d+\.\d+)[\s,]+(-?\d+\.\d+)/);
     if(dec) return {lat:+dec[1],lon:+dec[2]};
 
     return null;
 }
 
-// ✅ TIMESTAMP FUNCTION
+// timestamp
 function getTimestamp(){
-    let now = new Date();
-    return now.toLocaleString('en-IE', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+    return new Date().toLocaleString('en-IE',{
+        day:'2-digit',month:'short',year:'numeric',
+        hour:'2-digit',minute:'2-digit'
     });
 }
 
 // WhatsApp
-function shareWhatsApp(lat, lon, grid){
+function shareWhatsApp(lat,lon,grid){
 
-    let message =
+    let msg =
 `Irish Grid: ${grid}
 Decimal: ${lat.toFixed(6)}, ${lon.toFixed(6)}
 Time: ${getTimestamp()}
 
 https://maps.google.com/?q=${lat},${lon}`;
 
-    let url = "https://wa.me/?text=" + encodeURIComponent(message);
-
-    window.open(url);
+    window.open("https://wa.me/?text=" + encodeURIComponent(msg));
 }
 
-// ✅ Screenshot
+// ✅ Screenshot FIXED
 function saveScreenshot(){
 
     map.invalidateSize();
 
     setTimeout(()=>{
+
         html2canvas(document.getElementById("captureArea"),{
             useCORS:true,
             scale:2
         }).then(canvas=>{
-            let link=document.createElement("a");
-            link.download="location.png";
-            link.href=canvas.toDataURL();
-            link.click();
+
+            canvas.toBlob(blob=>{
+
+                let file=new File([blob],"SEMRA_location.png",{type:"image/png"});
+
+                if(navigator.canShare && navigator.canShare({files:[file]})){
+                    navigator.share({
+                        files:[file],
+                        title:"SEMRA Location"
+                    });
+                } else {
+                    let url=URL.createObjectURL(blob);
+                    window.open(url);
+                }
+
+            });
+
         });
+
     },400);
 }
 
@@ -215,7 +226,7 @@ function convert(){
     let res=parse(input.value);
 
     if(!res){
-        result.innerHTML="❌ Invalid format";
+        result.innerHTML="❌ Invalid input";
         return;
     }
 
@@ -233,18 +244,14 @@ function convert(){
 
     <br><b>Decimal</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}
 
-    <br><b>DMS</b><br>${toDMS(lat,true)}<br>${toDMS(lon,false)}
-
-    <br><b>DMM</b><br>${toDMM(lat,true)}<br>${toDMM(lon,false)}
-
     <br><br>
 
-    <button onclick="shareWhatsApp(${lat}, ${lon}, '${grid}')">
+    <button onclick="shareWhatsApp(${lat},${lon},'${grid}')">
     Share via WhatsApp</button>
 
-    <button onclick="saveScreenshot()">Save Screenshot</button>
+    <button onclick="saveScreenshot()">Share / Save Screenshot</button>
 
-    <button onclick="window.open('https://www.google.com/maps?q=${lat},${lon}')">
+    <button onclick="window.open('https://maps.google.com/?q=${lat},${lon}')">
     Open Google Maps</button>
 
     </div>
@@ -263,12 +270,9 @@ function resetTool(){
     if(marker){ map.removeLayer(marker); marker=null; }
     map.setView([53.4,-8],7);
 }
-    if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
-``
 
 </script>
 
 </body>
 </html>
+``
