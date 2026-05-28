@@ -127,9 +127,6 @@ button {
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
 
@@ -540,6 +537,8 @@ function saveScreenshot(){
 
   let staticMap = document.getElementById("staticMap");
   let liveMap = document.getElementById("map");
+  let staticUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&amp;zoom=13&amp;size=600x300&amp;maptype=terrain&amp;markers=color:red%7C${lat},${lon}`;
+
 
   // ✅ show static, hide live map
   staticMap.style.display = "block";
@@ -566,6 +565,10 @@ function resetTool(){
  if(marker){ map.removeLayer(marker); marker=null;}
  map.setView([53.5,-8],7);
 }
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js">
 
 </script>
 </body>
