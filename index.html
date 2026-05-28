@@ -532,8 +532,15 @@ function openMaps(lat,lon){
  window.open(`https://maps.google.com/?q=${lat},${lon}`);
 }
 
-function shareWhatsApp(lat,lon){
- window.open("https://wa.me/?text="+encodeURIComponent(`${lat},${lon}`));
+let message =
+`📍 SCOUT
+
+Grid: ${grid6}
+DD: ${lat.toFixed(6)}, ${lon.toFixed(6)}
+
+Maps:
+https://maps.google.com/?q=${lat},${lon}`;
+``
 }
 
 function saveScreenshot(){
