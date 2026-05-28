@@ -7,24 +7,21 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2c3e50">
 
-<!-- ✅ FIXED: correct tags -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
 body { margin:0; font-family:Arial; background:#eef2f6; }
 
 .header {
-    background:#2c3e50;
-    color:white;
-    padding:10px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:10px;
+  background:#2c3e50;
+  color:white;
+  padding:10px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
 }
 
 .logo { height:40px; }
@@ -32,46 +29,52 @@ body { margin:0; font-family:Arial; background:#eef2f6; }
 .container { max-width:650px; margin:auto; padding:15px; }
 
 .panel {
-    background:white;
-    padding:20px;
-    border-radius:10px;
-    position:relative;
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  position:relative;
 }
 
 textarea {
-    width:100%;
-    height:70px;
-    padding:10px;
-    font-size:16px;
+  width:100%;
+  height:70px;
+  padding:10px;
+  font-size:16px;
 }
 
 button {
-    width:100%;
-    padding:14px;
-    margin-top:8px;
-    border:none;
-    border-radius:6px;
-    background:#0078d4;
-    color:white;
+  width:100%;
+  padding:14px;
+  margin-top:8px;
+  border:none;
+  border-radius:6px;
+  background:#0078d4;
+  color:white;
 }
 
 .reset { background:#666; }
 
 .result {
-    margin-top:15px;
-    padding:15px;
-    background:#f9f9f9;
-    line-height:1.6;
+  margin-top:15px;
+  padding:15px;
+  background:#f9f9f9;
+  line-height:1.6;
+}
+
+.warning {
+  color:#b30000;
+  font-weight:bold;
+  margin-top:10px;
 }
 
 #map { height:300px; margin-top:15px; }
 
 .signature {
-    position:absolute;
-    bottom:6px;
-    right:10px;
-    font-size:11px;
-    color:#888;
+  position:absolute;
+  bottom:6px;
+  right:10px;
+  font-size:11px;
+  color:#888;
 }
 </style>
 </head>
@@ -84,7 +87,7 @@ button {
 </div>
 
 <div class="container">
-<div class="panel" id="captureArea">
+<div class="panel">
 
 <textarea id="input" placeholder="Enter or paste coordinates"></textarea>
 
@@ -95,125 +98,131 @@ button {
 <div id="map"></div>
 
 <div class="signature">S74</div>
-
 </div>
 </div>
 
 <script>
 
-// ✅ projections
 proj4.defs("EPSG:4326","+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:29903","+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=1.000035 +x_0=200000 +y_0=250000 +ellps=airy");
 
-// ✅ map
 let map = L.map('map').setView([53.4,-8],7);
-
-L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{
-    maxZoom:17
-}).addTo(map);
+L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png').addTo(map);
 
 let marker;
 
-// ✅ helpers
 function toDMS(deg,lat){
-    let d=Math.floor(Math.abs(deg));
-    let m=Math.floor((Math.abs(deg)-d)*60);
-    let s=(((Math.abs(deg)-d)*60-m)*60).toFixed(2);
-    let dir=lat?(deg>=0?"N":"S"):(deg>=0?"E":"W");
-    return `${d}° ${m}' ${s}" ${dir}`;
+  let d=Math.floor(Math.abs(deg));
+  let m=Math.floor((Math.abs(deg)-d)*60);
+  let s=(((Math.abs(deg)-d)*60-m)*60).toFixed(2);
+  let dir=lat?(deg>=0?"N":"S"):(deg>=0?"E":"W");
+  return `${d}° ${m}' ${s}" ${dir}`;
 }
 
 function getGridLetter(E,N){
-    const grid=[
-        ['V','W','X','Y','Z'],
-        ['Q','R','S','T','U'],
-        ['L','M','N','O','P'],
-        ['F','G','H','J','K'],
-        ['A','B','C','D','E']
-    ];
-    return grid[Math.floor(N/100000)][Math.floor(E/100000)];
+  const grid=[['V','W','X','Y','Z'],['Q','R','S','T','U'],['L','M','N','O','P'],['F','G','H','J','K'],['A','B','C','D','E']];
+  return grid[Math.floor(N/100000)][Math.floor(E/100000)];
 }
 
-// ✅ parser (FIXED)
 function parse(input){
 
-    input=input.toUpperCase()
-    .replace(/_/g," ")
-    .replace(/,/g," ")
-    .replace(/\s+/g," ")
-    .trim();
+  input=input.toUpperCase()
+  .replace(/_/g," ")
+  .replace(/,/g," ")
+  .replace(/\s+/g," ")
+  .trim();
 
-    let t=input.split(" ");
+  let t=input.split(" ");
 
-    // ✅ DMS fixed
-    if(t.length>=6){
+  // ✅ DMS
+  if(t.length>=6){
+    let lat= parseInt(t[0].slice(0,2)) + parseInt(t[0].slice(2))/60 + t[1]/3600;
+    let lon= parseInt(t[3].slice(0,2)) + parseInt(t[3].slice(2))/60 + t[4]/3600;
 
-        let degLat=parseInt(t[0].slice(0,2));
-        let minLat=parseInt(t[0].slice(2));
-        let secLat=parseFloat(t[1]);
+    if(t[2]=="S") lat=-lat;
+    if(t[5]=="W") lon=-lon;
 
-        let degLon=parseInt(t[3].slice(0,2));
-        let minLon=parseInt(t[3].slice(2));
-        let secLon=parseFloat(t[4]);
+    return {lat,lon,type:"DMS"};
+  }
 
-        let lat=degLat+(minLat/60)+(secLat/3600);
-        let lon=degLon+(minLon/60)+(secLon/3600);
+  // ✅ Decimal
+  let dec=input.match(/(-?\d+\.\d+)[\s]+(-?\d+\.\d+)/);
+  if(dec) return {lat:+dec[1],lon:+dec[2],type:"Decimal"};
 
-        if(t[2]=="S") lat=-lat;
-        if(t[5]=="W") lon=-lon;
+  // ✅ Irish Grid
+  let grid=input.match(/^([A-Z])\s*(\d+)\s+(\d+)/);
+  if(grid){
+    const letters="VWXYZQRSTULMNOPFGHJKABCDE";
+    let idx=letters.indexOf(grid[1]);
 
-        return {
-            lat, lon,
-            type:"DMS",
-            interp:`${toDMS(lat,true)}<br>${toDMS(lon,false)}`
-        };
-    }
+    let E=(idx%5)*100000+Number(grid[2])*Math.pow(10,5-grid[2].length);
+    let N=Math.floor(idx/5)*100000+Number(grid[3])*Math.pow(10,5-grid[3].length);
 
-    return null;
+    let c=proj4("EPSG:29903","EPSG:4326",[E-50,N+19]);
+
+    return {lat:c[1],lon:c[0],type:"Irish Grid"};
+  }
+
+  return null;
 }
 
-// ✅ convert
+// ✅ SMART WARNING
+function smartWarning(lat,lon){
+
+  if(lat < 51 || lat > 56 || lon > -5 || lon < -11){
+      if(Math.abs(lon) > 20){
+          return "⚠️ Warning: Location far outside Ireland. Possible longitude error (e.g. 83 instead of 8)";
+      }
+      return "⚠️ Warning: Location appears outside Ireland";
+  }
+  return "";
+}
+
 function convert(){
 
-    let res=parse(input.value);
+  let res=parse(input.value);
 
-    if(!res){
-        result.innerHTML="❌ Invalid input";
-        return;
-    }
+  if(!res){
+    result.innerHTML="❌ Invalid input";
+    return;
+  }
 
-    let lat=res.lat, lon=res.lon;
+  let lat=res.lat, lon=res.lon;
 
-    let g=proj4("EPSG:4326","EPSG:29903",[lon,lat]);
-    let E=g[0]+50, N=g[1]-19;
+  let warning=smartWarning(lat,lon);
 
-    let grid=`${getGridLetter(E,N)} ${Math.round(E%100000)} ${Math.round(N%100000)}`;
+  let g=proj4("EPSG:4326","EPSG:29903",[lon,lat]);
+  let E=g[0]+50, N=g[1]-19;
 
-    result.innerHTML=`
-    <div class="result">
+  let grid=`${getGridLetter(E,N)} ${Math.round(E%100000)} ${Math.round(N%100000)}`;
 
-    <b>Detected:</b> ${res.type}
+  result.innerHTML=`
+  <div class="result">
 
-    <br><br><b>Interpreted</b><br>${res.interp}
+  <b>Detected:</b> ${res.type}
 
-    <br><br><b>Irish Grid</b><br>${grid}
+  <br><br><b>Irish Grid</b><br>${grid}
 
-    <br><b>Decimal</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}
+  <br><b>Decimal</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}
 
-    </div>`;
+  <br><b>DMS</b><br>${toDMS(lat,true)}<br>${toDMS(lon,false)}
 
-    map.setView([lat,lon],13);
+  ${warning ? `<div class="warning">${warning}</div>` : ""}
 
-    if(marker) marker.setLatLng([lat,lon]);
-    else marker=L.marker([lat,lon]).addTo(map);
+  </div>
+  `;
+
+  map.setView([lat,lon],13);
+
+  if(marker) marker.setLatLng([lat,lon]);
+  else marker=L.marker([lat,lon]).addTo(map);
 }
 
-// reset
 function resetTool(){
-    input.value="";
-    result.innerHTML="";
-    if(marker){ map.removeLayer(marker); marker=null; }
-    map.setView([53.4,-8],7);
+  input.value="";
+  result.innerHTML="";
+  if(marker){ map.removeLayer(marker); marker=null; }
+  map.setView([53.4,-8],7);
 }
 
 </script>
