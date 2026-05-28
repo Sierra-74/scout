@@ -4,7 +4,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SEMRA S.C.O.U.T</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css  font-family: Arial, sans-serif;
+https://unpkg.com/leaflet@1.9.4/dist/leaflet.css
+
+<style>
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
   background:#eef2f6;
 }
 
@@ -45,7 +50,6 @@
   right:10px;
   font-size:11px;
   color:#777;
-  opacity:0.7;
 }
 
 textarea {
@@ -53,24 +57,14 @@ textarea {
   height:100px;
   padding:10px;
   font-size:16px;
-  border:1px solid #aaa;
   border-radius:6px;
-  box-sizing:border-box;
 }
 
 button {
   width:100%;
   padding:14px;
   margin-top:8px;
-  border:none;
   border-radius:6px;
-  font-size:16px;
-  font-weight:bold;
-}
-
-.reset {
-  background:#777;
-  color:white;
 }
 
 .result {
@@ -80,28 +74,20 @@ button {
   border-left:5px solid #0078d4;
 }
 
-.section-title {
-  margin-top:10px;
-  font-weight:bold;
-}
-
 .grid {
   font-size:20px;
   font-weight:bold;
   color:#0078d4;
 }
 
-.coord {
-  font-family:monospace;
-}
-
 #map {
   height:300px;
   margin-top:10px;
-  border-radius:8px;
 }
 </style>
+
 </head>
+
 
 <body>
 
@@ -126,9 +112,9 @@ button {
 </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaft>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.jsript src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 
 <script>
 
@@ -215,4 +201,4 @@ function resetTool(){
 
 </body>
 </html>
-``
+
