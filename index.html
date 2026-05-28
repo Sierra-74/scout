@@ -145,7 +145,7 @@ function parse(input){
         if(dmm[1]==="S") lat *= -1;
         if(dmm[4]==="W") lon *= -1;
 
-        return { lat, lon, type:"DMM" };
+        return { lat, lon, type:"DDM" };
     }
 
     let t = input.split(" ");
@@ -236,7 +236,7 @@ function convert(){
 
  <br><b>DMS</b><br>${toDMS(lat,true)}<br>${toDMS(lon,false)}
 
- <br><b>DMM</b><br>${toDMM(lat,true)}<br>${toDMM(lon,false)}
+<br><b>DDM</b><br>${toDMM(lat,true)}<br>${toDMM(lon,false)}
 
  <br><br>
  <button onclick="openMaps(${lat},${lon})">Google Maps</button>
