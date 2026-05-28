@@ -55,6 +55,9 @@ body {
   padding:18px;
   border-radius:10px;
   box-shadow:0 2px 5px rgba(0,0,0,0.1);
+  position:relative;   /* ✅ THIS IS REQUIRED */
+}
+  <div class="signature">S74</div>
 }
 
 /* ✅ INPUT */
@@ -126,6 +129,14 @@ button {
   margin-top:10px;
   border-radius:8px;
 }
+.signature {
+  position:absolute;
+  bottom:6px;
+  right:10px;
+  font-size:11px;
+  color:#777;
+  opacity:0.7;
+}
 
 </style>
 
@@ -142,6 +153,8 @@ button {
 
 <div class="container">
 <div class="panel" id="captureArea">
+  <div class="signature">S74</div>
+``
 
 <textarea id="input" placeholder="Enter coordinates"></textarea>
 
