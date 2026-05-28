@@ -4,8 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SEMRA C.C.</title>
 
-<!-- ✅ FIXED LIBRARIES -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -56,8 +56,6 @@ button {
   line-height:1.6;
 }
 
-.warning { color:#b30000; font-weight:bold; }
-
 #map { height:300px; margin-top:10px; }
 </style>
 </head>
@@ -86,9 +84,10 @@ button {
 proj4.defs("EPSG:4326","+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:29903","+proj=tmerc +lat_0=53.5 +lon_0=-8 +x_0=200000 +y_0=250000 +ellps=airy");
 
-// map init
+// map
 let map = L.map('map').setView([53.5,-8],7);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
 let marker;
 
 // formatters
@@ -113,7 +112,7 @@ function getGridLetter(E,N){
  return grid[Math.floor(N/100000)][Math.floor(E/100000)];
 }
 
-// ✅ parser (tested)
+// parser
 function parse(input){
 
  input=input.toUpperCase()
@@ -125,30 +124,7 @@ function parse(input){
 
  let t=input.split(" ");
 
- // DMS
- if(t.length>=7){
-  let lat=+t[0]+t[1]/60+t[2]/3600;
-  let lon=+t[4]+t[5]/60+t[6]/3600;
-  if(t[3]=="S") lat*=-1;
-  if(t[7]=="W") lon*=-1;
-  return {lat,lon,type:"DMS"};
- }
-
- // DMM
- let dmm=input.match(/([NS])\s*(\d+)\s+([\d.]+).*?([EW])\s*(\d+)\s+([\d.]+)/);
- if(dmm){
-  let lat=(+dmm[2])+(+dmm[3]/60);
-  let lon=(+dmm[5])+(+dmm[6]/60);
-  if(dmm[1]=="S") lat*=-1;
-  if(dmm[4]=="W") lon*=-1;
-  return {lat,lon,type:"DMM"};
- }
-
- // Decimal
- let dec=input.match(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/);
- if(dec) return {lat:+dec[1],lon:+dec[2],type:"Decimal"};
-
- // Irish Grid
+ // Irish Grid (your main case)
  let g=input.match(/^([A-Z])\s*(\d+)\s*(\d+)/);
  if(g){
   const letters="VWXYZQRSTULMNOPFGHJKABCDE";
@@ -166,7 +142,7 @@ function parse(input){
  return null;
 }
 
-// main
+// convert
 function convert(){
 
  let res=parse(input.value);
@@ -185,9 +161,8 @@ function convert(){
 
  result.innerHTML=`
  <div class="result">
- <b>Detected:</b> ${res.type}
 
- <br><br><b>Irish Grid</b><br>${grid}
+ <b>Irish Grid</b><br>${grid}
 
  <br><b>Decimal (DD)</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}
 
@@ -196,8 +171,9 @@ function convert(){
  <br><b>DMM</b><br>${toDMM(lat,true)}<br>${toDMM(lon,false)}
 
  <br><br>
- <button onclick="shareWhatsApp(${lat},${lon})">Share via WhatsApp</button>
- <button onclick="saveScreenshot()">Share Screenshot</button>
+ <button onclick="shareWhatsApp(${lat},${lon})">WhatsApp</button>
+ <button onclick="saveScreenshot()">Screenshot</button>
+
  </div>`;
 
  map.setView([lat,lon],13);
@@ -205,15 +181,28 @@ function convert(){
  else marker=L.marker([lat,lon]).addTo(map);
 }
 
-// extras
+// WhatsApp
 function shareWhatsApp(lat,lon){
  window.open("https://wa.me/?text="+encodeURIComponent(`${lat},${lon}`));
 }
 
+// ✅ FIXED screenshot
 function saveScreenshot(){
- html2canvas(document.getElementById("captureArea")).then(c=>{
+ html2canvas(document.getElementById("captureArea")).then(canvas=>{
+  let img=canvas.toDataURL("image/png");
   let w=window.open();
-  w.document.write(`<img src="${c.toDataURL()}" style="width:ker=null;}
+  w.document.write('<img src="'+img+'" style="width:100%">');
+ });
+}
+
+// ✅ FIXED reset
+function resetTool(){
+ input.value="";
+ result.innerHTML="";
+ if(marker){
+   map.removeLayer(marker);
+   marker=null;
+ }
  map.setView([53.5,-8],7);
 }
 
