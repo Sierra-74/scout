@@ -114,75 +114,98 @@ function getGridLetter(E,N){
 // ✅ FIXED PARSER (ORDER CRITICAL)
 function parse(input){
 
- input=input.toUpperCase()
- .replace(/_/g," ")
- .replace(/,/g," ")
- .replace(/[°'"]/g," ")
- .replace(/\s+/g," ")
- .trim();
+    let raw = input;
 
- // ✅ ALWAYS CHECK GRID FIRST
- let g=input.match(/^([A-Z])\s*(\d+)\s*(\d+)/);
- if(g){
-  const letters="VWXYZQRSTULMNOPFGHJKABCDE";
-  let idx=letters.indexOf(g[1]);
+    input = input.toUpperCase()
+        .replace(/_/g," ")
+        .replace(/,/g," ")
+        .replace(/[°'"]/g," ")
+        .replace(/\s+/g," ")
+        .trim();
 
-  let scale=Math.pow(10,5-g[2].length);
+    // ✅ 1. IRISH GRID (highest priority for letter inputs)
+    let grid = input.match(/^([A-Z])\s*(\d+)\s*(\d+)/);
+    if(grid){
+        const letters="VWXYZQRSTULMNOPFGHJKABCDE";
+        let idx=letters.indexOf(grid[1]);
 
-  let E=(idx%5)*100000 + Number(g[2])*scale;
-  let N=Math.floor(idx/5)*100000 + Number(g[3])*scale;
+        let scale=Math.pow(10,5-grid[2].length);
 
-  let c=proj4("EPSG:29903","EPSG:4326",[E-50,N+19]);
-  return {lat:c[1],lon:c[0],type:"Irish Grid"};
- }
+        let E=(idx%5)*100000 + Number(grid[2])*scale;
+        let N=Math.floor(idx/5)*100000 + Number(grid[3])*scale;
 
- let t=input.split(" ");
+        let c=proj4("EPSG:29903","EPSG:4326",[E-50,N+19]);
+        return {lat:c[1],lon:c[0],type:"Irish Grid"};
+    }
 
- // ✅ FULL DMS
- if(t.length>=8 && (t.includes("N")||t.includes("S"))){
-  let lat=+t[0]+t[1]/60+t[2]/3600;
-  let lon=+t[4]+t[5]/60+t[6]/3600;
-  if(t[3]=="S") lat*=-1;
-  if(t[7]=="W") lon*=-1;
-  return {lat,lon,type:"DMS"};
- }
+    // ✅ 2. DECIMAL (clear signature: 2 decimal numbers)
+    let dec = input.match(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/);
+    if(dec){
+        return {
+            lat:+dec[1],
+            lon:+dec[2],
+            type:"Decimal (DD)"
+        };
+    }
 
- // ✅ COMPRESSED DMS (FIXED)
- if(t.length>=6 && t[0].length >= 3 && /^[0-9]+$/.test(t[0])){
-  function dm(v){
-   let d=parseInt(v.slice(0,2));
-   let m=parseInt(v.slice(2)||0);
-   return [d,m];
-  }
+    // ✅ 3. DMM (N 52 29.10 W 6 44.81)
+    let dmm = input.match(/([NS])\s*(\d+)\s+([\d.]+)\s+([EW])\s*(\d+)\s+([\d.]+)/);
+    if(dmm){
+        let lat = (+dmm[2]) + (+dmm[3]/60);
+        let lon = (+dmm[5]) + (+dmm[6]/60);
 
-  let [d1,m1]=dm(t[0]);
-  let [d2,m2]=dm(t[3]);
+        if(dmm[1]==="S") lat *= -1;
+        if(dmm[4]==="W") lon *= -1;
 
-  let lat=d1+(m1/60)+(t[1]/3600);
-  let lon=d2+(m2/60)+(t[4]/3600);
+        return {
+            lat, lon,
+            type:"DMM"
+        };
+    }
 
-  if(t[2]=="S") lat*=-1;
-  if(t[5]=="W") lon*=-1;
+    let t = input.split(" ");
 
-  return {lat,lon,type:"DMS"};
- }
+    // ✅ 4. FULL DMS (52 22 48.77 N 8 14 35.01 W)
+    if(t.length>=8 && (t.includes("N")||t.includes("S"))){
+        let lat = (+t[0]) + (t[1]/60) + (t[2]/3600);
+        let lon = (+t[4]) + (t[5]/60) + (t[6]/3600);
 
- // ✅ DMM
- let dmm=input.match(/([NS])\s*(\d+)\s+([\d.]+).*?([EW])\s*(\d+)\s+([\d.]+)/);
- if(dmm){
-  let lat=(+dmm[2])+(+dmm[3]/60);
-  let lon=(+dmm[5])+(+dmm[6]/60);
-  if(dmm[1]=="S") lat*=-1;
-  if(dmm[4]=="W") lon*=-1;
-  return {lat,lon,type:"DMM"};
- }
+        if(t[3]==="S") lat *= -1;
+        if(t[7]==="W") lon *= -1;
 
- // ✅ Decimal
- let dec=input.match(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/);
- if(dec) return {lat:+dec[1],lon:+dec[2],type:"Decimal"};
+        return {
+            lat, lon,
+            type:"DMS"
+        };
+    }
 
- return null;
+    // ✅ 5. COMPRESSED DMS (e.g. 5215 7.26 N)
+    if(t.length>=6 && t[0].length >= 3 && /^[0-9]+$/.test(t[0])){
+
+        function dm(v){
+            let d=parseInt(v.slice(0,2));
+            let m=parseInt(v.slice(2)||0);
+            return [d,m];
+        }
+
+        let [d1,m1]=dm(t[0]);
+        let [d2,m2]=dm(t[3]);
+
+        let lat=d1+(m1/60)+(t[1]/3600);
+        let lon=d2+(m2/60)+(t[4]/3600);
+
+        if(t[2]=="S") lat*=-1;
+        if(t[5]=="W") lon*=-1;
+
+        return {
+            lat, lon,
+            type:"DMS (Compressed)"
+        };
+    }
+
+    return null;
 }
+
 
 // ✅ MAIN
 function convert(){
