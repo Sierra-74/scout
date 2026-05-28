@@ -55,19 +55,31 @@ body {
   padding:18px;
   border-radius:10px;
   box-shadow:0 2px 5px rgba(0,0,0,0.1);
-  position:relative;   /* ✅ THIS IS REQUIRED */
+  position:relative;
 }
-  <div class="signature">S74</div>
+
+.signature {
+  position:absolute;
+  bottom:6px;
+  right:10px;
+  font-size:11px;
+  color:#777;
+  opacity:0.7;
 }
+``
+  
+
 
 /* ✅ INPUT */
 textarea {
   width:100%;
-  height:80px;
+  height:90px;
   padding:10px;
   font-size:16px;
-  border:1px solid #ccc;
+  border:1px solid #aaa;
   border-radius:6px;
+  resize:vertical;
+  box-sizing:border-box;   /* ✅ CRITICAL FIX */
 }
 
 /* ✅ BUTTONS */
