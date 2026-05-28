@@ -289,7 +289,7 @@ button {
 
 <div id="result"></div>
 <div id="map"></div>
-
+<img id="staticMap" style="width:100%; margin-top:10px; display:none; border-radius:8px;">
 </div>
 </div>
 
@@ -519,6 +519,12 @@ result.innerHTML=`
  map.setView([lat,lon],13);
  if(marker) marker.setLatLng([lat,lon]);
  else marker=L.marker([lat,lon]).addTo(map);
+  // ✅ Generate static map (fallback for screenshots)
+let staticUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=13&size=600x300&maptype=terrain&markers=color:red%7C${lat},${lon}`;
+
+let staticMap = document.getElementById("staticMap");
+staticMap.src = staticUrl;
+staticMap.style.display = "block";
 }
 
 // tools
@@ -532,18 +538,25 @@ function shareWhatsApp(lat,lon){
 
 function saveScreenshot(){
 
+  let staticMap = document.getElementById("staticMap");
+  let liveMap = document.getElementById("map");
+
+  // ✅ show static, hide live map
+  staticMap.style.display = "block";
+  liveMap.style.display = "none";
+
   html2canvas(document.getElementById("captureArea"), {
-    useCORS: true,       // ✅ allow external images
-    allowTaint: false,
+    useCORS: true,
     backgroundColor: "#ffffff"
   }).then(canvas => {
 
     let img = canvas.toDataURL("image/png");
 
-    // ✅ open image (works on phone + desktop)
+    // ✅ restore map after capture
+    liveMap.style.display = "block";
+
     let w = window.open();
     w.document.write('<img src="'+img+'" style="width:100%">');
-
   });
 }
 
