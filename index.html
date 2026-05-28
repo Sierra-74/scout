@@ -4,10 +4,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SEMRA C.C.</title>
 
-<!-- ✅ FIXED LIBRARIES (THIS WAS YOUR MAIN ISSUE) -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- ✅ CORRECT LIBRARIES -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leafletkg.com/leaflet@1.9.4/dist/leaft>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
 body { margin:0; font-family:Arial; background:#eef2f6; }
@@ -16,10 +17,8 @@ body { margin:0; font-family:Arial; background:#eef2f6; }
  background:#2c3e50;
  color:white;
  padding:10px;
- display:flex;
- justify-content:center;
- align-items:center;
- gap:10px;
+ text-align:center;
+ font-size:18px;
 }
 
 .container { max-width:650px; margin:auto; padding:15px; }
@@ -28,49 +27,53 @@ body { margin:0; font-family:Arial; background:#eef2f6; }
  background:white;
  padding:20px;
  border-radius:10px;
+ position:relative;
 }
 
 textarea {
  width:100%;
  height:80px;
- padding:10px;
  font-size:16px;
+ padding:10px;
 }
 
 button {
  width:100%;
  padding:14px;
  margin-top:8px;
- background:#0078d4;
- color:white;
  border:none;
  border-radius:6px;
+ background:#0078d4;
+ color:white;
+ font-size:16px;
 }
+
+.reset { background:#666; }
 
 .result {
  margin-top:15px;
  padding:15px;
  background:#f9f9f9;
+ line-height:1.6;
 }
 
 .warning { color:#b30000; font-weight:bold; }
 
-#map { height:300px; margin-top:15px; }
+#map { height:300px; margin-top:10px; }
 </style>
 </head>
 
 <body>
 
-<div class="header">
-<div>SEMRA C.C.</div>
-</div>
+<div class="header">SEMRA C.C.</div>
 
 <div class="container">
-<div class="panel">
+<div class="panel" id="captureArea">
 
 <textarea id="input" placeholder="Enter coordinates"></textarea>
 
 <button onclick="convert()">Convert & Locate</button>
+<button class="reset" onclick="resetTool()">Reset</button>
 
 <div id="result"></div>
 <div id="map"></div>
@@ -98,13 +101,17 @@ function toDMS(d,lat){
  return `${deg}° ${min}' ${sec}" ${dir}`;
 }
 
-// ✅ SINGLE CLEAN PARSER (ALL FORMATS)
+function getGridLetter(E,N){
+ const grid=[['V','W','X','Y','Z'],['Q','R','S','T','U'],
+ ['L','M','N','O','P'],['F','G','H','J','K'],['A','B','C','D','E']];
+ return grid[Math.floor(N/100000)][Math.floor(E/100000)];
+}
+
+// ✅ SMART PARSER
 function parse(input){
 
- input=input.toUpperCase();
-
- // normalise
- input=input.replace(/_/g," ")
+ input=input.toUpperCase()
+ .replace(/_/g," ")
  .replace(/,/g," ")
  .replace(/[°'"]/g," ")
  .replace(/\s+/g," ")
@@ -112,26 +119,23 @@ function parse(input){
 
  let t=input.split(" ");
 
- // ✅ DMS full (52 22 48 N 8 14 35 W)
- if(t.length>=7 && t.includes("N") || t.includes("S")){
-  try{
-    let lat=(+t[0])+(+t[1]/60)+(+t[2]/3600);
-    if(t[3]==="S") lat*=-1;
+ // ✅ DMS
+ if(t.length>=7){
+  let lat=(+t[0])+(t[1]/60)+(t[2]/3600);
+  let lon=(+t[4])+(t[5]/60)+(t[6]/3600);
 
-    let lon=(+t[4])+(+t[5]/60)+(+t[6]/3600);
-    if(t[7]==="W") lon*=-1;
+  if(t[3]=="S") lat=-lat;
+  if(t[7]=="W") lon=-lon;
 
-    return {lat,lon,type:"DMS"};
-  }catch{}
+  return {lat,lon,type:"DMS"};
  }
 
- // ✅ COMPRESSED DMS (5215 7.26 N)
+ // ✅ COMPRESSED DMS
  if(t.length>=6 && t[0].length>=3){
-
   function dm(v){
-    let deg=parseInt(v.slice(0,2));
-    let min=parseInt(v.slice(2)||0);
-    return [deg,min];
+    let d=parseInt(v.slice(0,2));
+    let m=parseInt(v.slice(2)||0);
+    return [d,m];
   }
 
   let [d1,m1]=dm(t[0]);
@@ -140,8 +144,8 @@ function parse(input){
   let lat=d1+(m1/60)+(t[1]/3600);
   let lon=d2+(m2/60)+(t[4]/3600);
 
-  if(t[2]==="S") lat*=-1;
-  if(t[5]==="W") lon*=-1;
+  if(t[2]=="S") lat*=-1;
+  if(t[5]=="W") lon*=-1;
 
   return {lat,lon,type:"DMS"};
  }
@@ -151,44 +155,46 @@ function parse(input){
  if(dmm){
   let lat=(+dmm[2])+(+dmm[3]/60);
   let lon=(+dmm[5])+(+dmm[6]/60);
-  if(dmm[1]==="S") lat*=-1;
-  if(dmm[4]==="W") lon*=-1;
+  if(dmm[1]=="S") lat*=-1;
+  if(dmm[4]=="W") lon*=-1;
   return {lat,lon,type:"DMM"};
  }
 
- // ✅ Decimal
+ // ✅ DECIMAL
  let dec=input.match(/(-?\d+\.\d+)[\s]+(-?\d+\.\d+)/);
- if(dec){
-  return {lat:+dec[1],lon:+dec[2],type:"Decimal"};
- }
+ if(dec) return {lat:+dec[1],lon:+dec[2],type:"Decimal"};
 
- // ✅ Irish grid
+ // ✅ IRISH GRID
  let g=input.match(/^([A-Z])\s*(\d+)\s*(\d+)/);
  if(g){
   const letters="VWXYZQRSTULMNOPFGHJKABCDE";
   let idx=letters.indexOf(g[1]);
-  let e=(idx%5)*100000 + Number(g[2])*Math.pow(10,5-g[2].length);
-  let n=Math.floor(idx/5)*100000 + Number(g[3])*Math.pow(10,5-g[3].length);
-  let c=proj4("EPSG:29903","EPSG:4326",[e,n]);
+
+  let E=(idx%5)*100000 + Number(g[2])*Math.pow(10,5-g[2].length);
+  let N=Math.floor(idx/5)*100000 + Number(g[3])*Math.pow(10,5-g[3].length);
+
+  let c=proj4("EPSG:29903","EPSG:4326",[E-50,N+19]);
+
   return {lat:c[1],lon:c[0],type:"Irish Grid"};
  }
 
  return null;
 }
 
-// ✅ WARNING
+// warning
 function warning(lat,lon){
  if(lat<51||lat>56||lon>-5||lon<-11){
-   if(Math.abs(lon)>20){
-     return "⚠️ Possible wrong longitude (e.g. 83 instead of 8)";
-   }
-   return "⚠️ Location appears outside Ireland";
+  if(Math.abs(lon)>20){
+    return "⚠️ Possible longitude error (e.g. 83 instead of 8)";
+  }
+  return "⚠️ Location outside Ireland";
  }
  return "";
 }
 
-// ✅ MAIN
+// main
 function convert(){
+
  let res=parse(input.value);
 
  if(!res){
@@ -198,28 +204,53 @@ function convert(){
 
  let lat=res.lat, lon=res.lon;
 
- // grid
  let g=proj4("EPSG:4326","EPSG:29903",[lon,lat]);
- let grid=`${Math.round(g[0])}, ${Math.round(g[1])}`;
+ let E=g[0]+50, N=g[1]-19;
+
+ let grid=`${getGridLetter(E,N)} ${Math.round(E%100000)} ${Math.round(N%100000)}`;
 
  let warn=warning(lat,lon);
 
  result.innerHTML=`
  <div class="result">
+
  <b>Detected:</b> ${res.type}
- <br><br>
- <b>Decimal:</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}
- <br><br>
- <b>DMS:</b><br>${toDMS(lat,true)}<br>${toDMS(lon,false)}
- <br><br>
- <b>Irish Grid:</b><br>${grid}
+
+ <br><br><b>Irish Grid</b><br>${grid}
+
+ <br><b>Decimal</b><br>${lat.toFixed(6)}, ${lon.toFixed(6)}
+
+ <br><b>DMS</b><br>${toDMS(lat,true)}<br>${toDMS(lon,false)}
+
  ${warn?`<div class="warning">${warn}</div>`:""}
+
+ <br><br>
+ <button onclick="shareWhatsApp(${lat},${lon})">Share via WhatsApp</button>
+ <button onclick="saveScreenshot()">Share Screenshot</button>
+
  </div>
  `;
 
  map.setView([lat,lon],13);
  if(marker) marker.setLatLng([lat,lon]);
  else marker=L.marker([lat,lon]).addTo(map);
+}
+
+// WhatsApp
+function shareWhatsApp(lat,lon){
+ let msg=`Lat/Lon: ${lat}, ${lon}
+https://maps.google.com/?q=${lat},${lon}`;
+ window.open("https://wa.me/?text="+encodeURIComponent(msg));
+}
+
+// screenshot
+function saveScreenshot(){
+ html2canvas(document.querySelector("#captureArea")).then(canvas=>{
+   let img=canvas.toDataURL("image/png");
+   let w=window.open();
+   w.document.write(`<img src="${img}" style="width:100esult.innerHTML="";
+ if(marker){ map.removeLayer(marker); marker=null; }
+ map.setView([53.5,-8],7);
 }
 
 </script>
