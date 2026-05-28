@@ -162,25 +162,47 @@ function parse(input){
     }
 
     // ✅ 4. COMPRESSED DMS (5215 7.26 N)
-    if(t.length >= 6 && /^[0-9]+$/.test(t[0])){
+// ✅ COMPRESSED DMS (ROBUST FIX)
+if(t.length >= 6 && /^[0-9]+$/.test(t[0])){
 
-        function dm(v){
-            let d=parseInt(v.slice(0,2));
-            let m=parseInt(v.slice(2)||0);
-            return [d,m];
+    function parseDM(value){
+
+        value = value.toString();
+
+        // length 4 → 5215 → 52° 15'
+        if(value.length === 4){
+            return [parseInt(value.slice(0,2)), parseInt(value.slice(2))];
         }
 
-        let [d1,m1]=dm(t[0]);
-        let [d2,m2]=dm(t[3]);
+        // length 3 → 833 → 8° 33'
+        if(value.length === 3){
+            return [parseInt(value.slice(0,1)), parseInt(value.slice(1))];
+        }
 
-        let lat=d1+(m1/60)+(t[1]/3600);
-        let lon=d2+(m2/60)+(t[4]/3600);
+        // length 2 → 83 → assume 8° 3'
+        if(value.length === 2){
+            return [parseInt(value[0]), parseInt(value[1])];
+        }
 
-        if(t[2]=="S") lat*=-1;
-        if(t[5]=="W") lon*=-1;
-
-        return { lat, lon, type:"DMS (Compressed)" };
+        // fallback (safe default)
+        return [parseInt(value), 0];
     }
+
+    let [dLat, mLat] = parseDM(t[0]);
+    let [dLon, mLon] = parseDM(t[3]);
+
+    let lat = dLat + (mLat/60) + (parseFloat(t[1]) / 3600);
+    let lon = dLon + (mLon/60) + (parseFloat(t[4]) / 3600);
+
+    if(t[2] === "S") lat *= -1;
+    if(t[5] === "W") lon *= -1;
+
+    return {
+        lat,
+        lon,
+        type: "DMS (Compressed)"
+    };
+}
 
     // ✅ 5. IRISH GRID (STRICT MATCH ONLY)
     let grid = input.match(/^([A-Z])\s*(\d{2,5})\s*(\d{2,5})$/);
