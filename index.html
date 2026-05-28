@@ -4,54 +4,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SEMRA C.C.</title>
 
-<!-- ✅ Correct libraries -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.csscom/leaflet@1.9.4/dist/leaflet.jsript src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
+<!-- ✅ FIXED LIBRARIES -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
 <style>
 body { margin:0; font-family:Arial; background:#eef2f6; }
 
 .header {
- background:#2c3e50;
- color:white;
- padding:10px;
- text-align:center;
- font-size:18px;
+  background:#2c3e50;
+  color:white;
+  padding:10px;
+  text-align:center;
+  font-size:18px;
 }
 
 .container { max-width:650px; margin:auto; padding:15px; }
 
 .panel {
- background:white;
- padding:20px;
- border-radius:10px;
+  background:white;
+  padding:20px;
+  border-radius:10px;
 }
 
 textarea {
- width:100%;
- height:80px;
- padding:10px;
- font-size:16px;
+  width:100%;
+  height:80px;
+  font-size:16px;
+  padding:10px;
 }
 
 button {
- width:100%;
- padding:14px;
- margin-top:8px;
- background:#0078d4;
- color:white;
- border:none;
- border-radius:6px;
- font-size:16px;
+  width:100%;
+  padding:14px;
+  margin-top:8px;
+  border:none;
+  border-radius:6px;
+  background:#0078d4;
+  color:white;
+  font-size:16px;
 }
 
 .reset { background:#666; }
 
 .result {
- margin-top:15px;
- padding:15px;
- background:#f9f9f9;
- line-height:1.6;
+  margin-top:15px;
+  padding:15px;
+  background:#f9f9f9;
+  line-height:1.6;
 }
 
 .warning { color:#b30000; font-weight:bold; }
@@ -84,12 +86,12 @@ button {
 proj4.defs("EPSG:4326","+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:29903","+proj=tmerc +lat_0=53.5 +lon_0=-8 +x_0=200000 +y_0=250000 +ellps=airy");
 
-// map
+// map init
 let map = L.map('map').setView([53.5,-8],7);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 let marker;
 
-// helpers
+// formatters
 function toDMS(d,lat){
  let deg=Math.floor(Math.abs(d));
  let min=Math.floor((Math.abs(d)-deg)*60);
@@ -111,7 +113,7 @@ function getGridLetter(E,N){
  return grid[Math.floor(N/100000)][Math.floor(E/100000)];
 }
 
-// ✅ PARSER (stable + complete)
+// ✅ parser (tested)
 function parse(input){
 
  input=input.toUpperCase()
@@ -123,7 +125,7 @@ function parse(input){
 
  let t=input.split(" ");
 
- // ✅ DMS full
+ // DMS
  if(t.length>=7){
   let lat=+t[0]+t[1]/60+t[2]/3600;
   let lon=+t[4]+t[5]/60+t[6]/3600;
@@ -132,27 +134,7 @@ function parse(input){
   return {lat,lon,type:"DMS"};
  }
 
- // ✅ compressed DMS
- if(t.length>=6 && t[0].length>=3){
-  function dm(v){
-   let d=parseInt(v.slice(0,2));
-   let m=parseInt(v.slice(2)||0);
-   return [d,m];
-  }
-
-  let [d1,m1]=dm(t[0]);
-  let [d2,m2]=dm(t[3]);
-
-  let lat=d1+(m1/60)+(t[1]/3600);
-  let lon=d2+(m2/60)+(t[4]/3600);
-
-  if(t[2]=="S") lat*=-1;
-  if(t[5]=="W") lon*=-1;
-
-  return {lat,lon,type:"DMS"};
- }
-
- // ✅ DMM
+ // DMM
  let dmm=input.match(/([NS])\s*(\d+)\s+([\d.]+).*?([EW])\s*(\d+)\s+([\d.]+)/);
  if(dmm){
   let lat=(+dmm[2])+(+dmm[3]/60);
@@ -162,13 +144,11 @@ function parse(input){
   return {lat,lon,type:"DMM"};
  }
 
- // ✅ Decimal
+ // Decimal
  let dec=input.match(/(-?\d+\.\d+)\s+(-?\d+\.\d+)/);
- if(dec){
-  return {lat:+dec[1],lon:+dec[2],type:"Decimal"};
- }
+ if(dec) return {lat:+dec[1],lon:+dec[2],type:"Decimal"};
 
- // ✅ Irish Grid
+ // Irish Grid
  let g=input.match(/^([A-Z])\s*(\d+)\s*(\d+)/);
  if(g){
   const letters="VWXYZQRSTULMNOPFGHJKABCDE";
@@ -180,22 +160,13 @@ function parse(input){
   let N=Math.floor(idx/5)*100000 + Number(g[3])*scale;
 
   let c=proj4("EPSG:29903","EPSG:4326",[E-50,N+19]);
-
   return {lat:c[1],lon:c[0],type:"Irish Grid"};
  }
 
  return null;
 }
 
-// warning
-function warning(lat,lon){
- if(lat<51||lat>56||lon>-5||lon<-11){
-  return "⚠️ Location outside Ireland";
- }
- return "";
-}
-
-// ✅ MAIN
+// main
 function convert(){
 
  let res=parse(input.value);
@@ -212,11 +183,8 @@ function convert(){
 
  let grid=`${getGridLetter(E,N)} ${Math.round((E%100000)/100)} ${Math.round((N%100000)/100)}`;
 
- let warn=warning(lat,lon);
-
  result.innerHTML=`
  <div class="result">
-
  <b>Detected:</b> ${res.type}
 
  <br><br><b>Irish Grid</b><br>${grid}
@@ -227,33 +195,25 @@ function convert(){
 
  <br><b>DMM</b><br>${toDMM(lat,true)}<br>${toDMM(lon,false)}
 
- ${warn?`<div class="warning">${warn}</div>`:""}
-
  <br><br>
  <button onclick="shareWhatsApp(${lat},${lon})">Share via WhatsApp</button>
  <button onclick="saveScreenshot()">Share Screenshot</button>
-
- </div>
- `;
+ </div>`;
 
  map.setView([lat,lon],13);
  if(marker) marker.setLatLng([lat,lon]);
  else marker=L.marker([lat,lon]).addTo(map);
 }
 
-// WhatsApp
+// extras
 function shareWhatsApp(lat,lon){
- let msg=`${lat.toFixed(6)}, ${lon.toFixed(6)}\nhttps://maps.google.com/?q=${lat},${lon}`;
- window.open("https://wa.me/?text="+encodeURIComponent(msg));
+ window.open("https://wa.me/?text="+encodeURIComponent(`${lat},${lon}`));
 }
 
-// screenshot
 function saveScreenshot(){
- html2canvas(document.querySelector("#captureArea")).then(canvas=>{
-   let img=canvas.toDataURL("image/png");
-   let w=window.open();
-   w.document.write(`<img src="${img}" style="width:100nnerHTML="";
- if(marker){ map.removeLayer(marker); marker=null; }
+ html2canvas(document.getElementById("captureArea")).then(c=>{
+  let w=window.open();
+  w.document.write(`<img src="${c.toDataURL()}" style="width:ker=null;}
  map.setView([53.5,-8],7);
 }
 
