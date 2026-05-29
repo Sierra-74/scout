@@ -592,6 +592,9 @@ function display(lat, lon, type){
         <button onclick="shareWhatsApp(${lat}, ${lon})">
           📤 Share via WhatsApp
         </button>
+<button onclick="saveScreenshot()">
+  📸 Screenshot
+</button>
 
       </div>
 
@@ -634,9 +637,22 @@ async function convert(){
 
     try{
 
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(parsed.value)}+Ireland`
-      );
+     const response = await fetch(
+  `https://maps.googleapis.com/maps/api/geocode/json?address=${parsed.value},Ireland&key=AIzaSyBA7CuGaDt3OZPiUvPOYHXLvcfvOZA9vLk`
+);
+
+const data = await response.json();
+
+if(!data.results || !data.results.length){
+  result.innerHTML =
+    `<div class="error">❌ Eircode not found</div>`;
+  return;
+}
+
+const loc = data.results[0].geometry.location;
+
+display(loc.lat, loc.lng, "Eircode");
+
 
       const data = await response.json();
 
@@ -710,7 +726,25 @@ function resetTool(){
 
     marker = null;
   }
+function saveScreenshot(){
 
+  html2canvas(
+    document.getElementById("captureArea"),
+    {
+      useCORS: true,
+      backgroundColor: "#ffffff"
+    }
+  ).then(canvas => {
+
+    const img = canvas.toDataURL("image/png");
+
+    const w = window.open();
+    w.document.write(
+      `<img src="${img}" style="width:100%">`
+    );
+
+  });
+}
   map.setView([53.5, -8], 7);
 }
 
