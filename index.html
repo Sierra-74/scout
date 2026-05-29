@@ -301,14 +301,52 @@ if(res && res.type === "EIRCODE"){
 
   const query = encodeURIComponent(res.value + ", Ireland");
 
-  // 1️⃣ GOOGLE FIRST
- const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=AIzaSyBA7CuGaDt3OZPiUvPOYHXLvcfvOZA9vLk`;
+  // 🔵 1. GOOGLE FIRST
+  fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=AIzaSyBA7CuGaDt3OZPiUvPOYHXLvcfvOZA9vLk`)
+    .then(r => r.json())
+    .then(data => {
 
-fetch(url)
-  .then(r => r.json())
-  .then(data => {
-    console.log(data);
-  });
+      console.log("Google response:", data);
+
+      if(data.status === "OK" && data.results.length){
+
+        let lat = data.results[0].geometry.location.lat;
+        let lon = data.results[0].geometry.location.lng;
+
+        updateMap(lat, lon, "Eircode (Google)");
+        return;
+
+      }
+
+      // 🟡 2. FALLBACK → OPENSTREETMAP
+      return fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+
+    })
+    .then(r => r ? r.json() : null)
+    .then(data => {
+
+      // If fallback ran
+      if(!data) return;
+
+      if(Array.isArray(data) && data.length){
+
+        let lat = parseFloat(data[0].lat);
+        let lon = parseFloat(data[0].lon);
+
+        updateMap(lat, lon, "Eircode (OSM fallback)");
+        return;
+      }
+
+      result.innerHTML = "❌ Eircode not found in any service";
+
+    })
+    .catch(err => {
+      console.error(err);
+      result.innerHTML = "❌ Lookup failed (network/API error)";
+    });
+
+  return;
+}
 
       if(data.status === "OK" && data.results.length){
 
