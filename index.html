@@ -1,137 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
-<title>SEMRA S.C.O.U.T</title>
-
-<link rel="manifest" href="manifest.json">
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-
-<style>
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#eef2f6;
-}
-
-.header{
-  background:#1f2f3a;
-  color:#fff;
-  padding:12px;
-  text-align:center;
-}
-
-.title{font-size:22px;font-weight:bold;letter-spacing:2px;}
-.subtitle{font-size:13px;opacity:.85;}
-
-.container{max-width:650px;margin:auto;padding:15px;}
-
-.panel{
-  background:#fff;
-  padding:18px;
-  border-radius:10px;
-  box-shadow:0 2px 5px rgba(0,0,0,.1);
-  position:relative;
-}
-
-textarea{
-  width:100%;
-  height:90px;
-  padding:10px;
-  font-size:16px;
-  border:1px solid #aaa;
-  border-radius:6px;
-  box-sizing:border-box;
-}
-
-button{
-  width:100%;
-  padding:14px;
-  margin-top:8px;
-  border:none;
-  border-radius:6px;
-  font-size:16px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.convert{background:#0078d4;color:#fff;}
-.reset{background:#777;color:#fff;}
-
-.result{
-  margin-top:15px;
-  padding:15px;
-  background:#f9f9f9;
-  border-left:5px solid #0078d4;
-}
-
-.section-title{margin-top:10px;font-weight:bold;}
-.grid{font-size:20px;font-weight:bold;color:#0078d4;}
-.coord{font-family:monospace;font-size:15px;}
-
-#map{height:300px;margin-top:10px;border-radius:8px;}
-.signature{position:absolute;bottom:6px;right:10px;font-size:11px;color:#777;opacity:.7;}
-</style>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.9.0/proj4.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-</head>
-
-<body>
-
-<div class="header">
-  <div class="title">S.C.O.U.T</div>
-  <div class="subtitle">SEMRA Coordinate & Orientation Utility Tool</div>
-</div>
-
-<div class="container">
-<div class="panel" id="captureArea">
-
-<div class="signature">S74</div>
-
-<textarea id="input" placeholder="Enter coordinates or Eircode"></textarea>
-
-<button class="convert" onclick="convert()">Convert & Locate</button>
-<button class="reset" onclick="resetTool()">Reset</button>
-
-<div id="result"></div>
-<div id="map"></div>
-
-</div>
-</div>
-
 <script>
 const input = document.getElementById("input");
 const result = document.getElementById("result");
-  
+
 proj4.defs("EPSG:4326","+proj=longlat +datum=WGS84 +no_defs");
 proj4.defs("EPSG:29903",
 "+proj=tmerc +lat_0=53.5 +lon_0=-8 +k=0.9996 +x_0=600000 +y_0=750000 +ellps=airy +units=m +no_defs"
 );
+
 let map = L.map('map').setView([53.5,-8],7);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{crossOrigin:true}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  crossOrigin:true
+}).addTo(map);
+
 let marker;
 
-function toDMS(d,lat){
- let deg=Math.floor(Math.abs(d));
- let min=Math.floor((Math.abs(d)-deg)*60);
- let sec=((Math.abs(d)-deg)*3600-min*60).toFixed(2);
- let dir=lat?(d>=0?"N":"S"):(d>=0?"E":"W");
- return `${deg}° ${min}' ${sec}" ${dir}`;
+function toDMS(d, lat){
+  let deg = Math.floor(Math.abs(d));
+  let min = Math.floor((Math.abs(d)-deg)*60);
+  let sec = ((Math.abs(d)-deg)*3600 - min*60).toFixed(2);
+  let dir = lat ? (d>=0?"N":"S") : (d>=0?"E":"W");
+  return `${deg}° ${min}' ${sec}" ${dir}`;
 }
 
-function toDMM(d,lat){
- let deg=Math.floor(Math.abs(d));
- let min=((Math.abs(d)-deg)*60).toFixed(4);
- let dir=lat?(d>=0?"N":"S"):(d>=0?"E":"W");
- return `${deg}° ${min}' ${dir}`;
+function toDMM(d, lat){
+  let deg = Math.floor(Math.abs(d));
+  let min = ((Math.abs(d)-deg)*60).toFixed(4);
+  let dir = lat ? (d>=0?"N":"S") : (d>=0?"E":"W");
+  return `${deg}° ${min}' ${dir}`;
 }
 
 function getGridLetter(E,N){
-  const grid=[
+  const grid = [
     ['V','W','X','Y','Z'],
     ['Q','R','S','T','U'],
     ['L','M','N','O','P'],
@@ -143,87 +42,93 @@ function getGridLetter(E,N){
   let col = Math.floor(E/100000);
 
   if(row < 0 || row > 4 || col < 0 || col > 4) return '?';
-
-  return grid[row]?.[col] ?? '?';
+  return grid[row][col] ?? '?';
 }
 
-function parse(input){
- input=input.toUpperCase().replace(/[_°,']/g," ").replace(/\s+/g," ").trim();
+function parse(raw){
+  let input = raw.toUpperCase()
+    .replace(/[_°,']/g," ")
+    .replace(/\s+/g," ")
+    .trim();
 
-// EIRCODE
-if(/^[A-Z0-9]{3}\s?[A-Z0-9]{4}$/.test(input.replace(/\s/g,""))){
- return {type:"EIRCODE",value:input.replace(/\s/g,"")};
-}
+  // EIRCODE
+  if(/^[A-Z0-9]{3}\s?[A-Z0-9]{4}$/.test(input.replace(/\s/g,""))){
+    return {type:"EIRCODE", value: input.replace(/\s/g,"")};
+  }
 
-let parts=input.split(" ");
+  let parts = input.split(" ");
 
-// decimal
-if(parts.length===2&&parts.every(x=>/^-?\d+(\.\d+)?$/.test(x))){
- return{type:"DD",lat:+parts[0],lon:+parts[1]};
-}
+  // Decimal degrees
+  if(parts.length===2 && parts.every(x=>/^-?\d+(\.\d+)?$/.test(x))){
+    return {type:"DD", lat:+parts[0], lon:+parts[1]};
+  }
 
-// DMM
-let dmm=input.match(/([NS])\s*(\d+)\s+(\d+(?:\.\d+)?)\s+([EW])\s*(\d+)\s+(\d+(?:\.\d+)?)/);
-if(dmm){
- let lat=+dmm[2]+(+dmm[3]/60);
- let lon=+dmm[5]+(+dmm[6]/60);
- if(dmm[1]==='S')lat*=-1;
- if(dmm[4]==='W')lon*=-1;
- return{type:"DMM",lat,lon};
-}
+  // DMM
+  let dmm = input.match(/([NS])\s*(\d+)\s+(\d+(?:\.\d+)?)\s+([EW])\s*(\d+)\s+(\d+(?:\.\d+)?)/);
+  if(dmm){
+    let lat = +dmm[2] + (+dmm[3]/60);
+    let lon = +dmm[5] + (+dmm[6]/60);
+    if(dmm[1]==='S') lat *= -1;
+    if(dmm[4]==='W') lon *= -1;
+    return {type:"DMM", lat, lon};
+  }
 
-// DMS
-if(parts.length>=8&&(parts.includes("N")||parts.includes("S"))){
- let lat=+parts[0]+(+parts[1]/60)+(+parts[2]/3600);
- let lon=+parts[4]+(+parts[5]/60)+(+parts[6]/3600);
- if(parts[3]==='S')lat*=-1;
- if(parts[7]==='W')lon*=-1;
- return{type:"DMS",lat,lon};
-}
+  // DMS (fixed indexing)
+  if(parts.length >= 7 && (parts.includes("N")||parts.includes("S"))){
+    let lat = +parts[0] + (+parts[1]/60) + (+parts[2]/3600);
+    let lon = +parts[4] + (+parts[5]/60) + (+parts[6]/3600);
 
-// Irish grid
-let g=input.match(/^([A-Z])\s*(\d{2,5})\s*(\d{2,5})$/);
-if(g){
-  const letters="VWXYZQRSTULMNOPFGHJKABCDE";
-  let idx=letters.indexOf(g[1]);
-  if(idx<0)return null;
+    if(parts[3]==='S') lat *= -1;
+    if(parts[7]==='W') lon *= -1;
 
-  let scale = Math.pow(10,5-g[2].length);
+    return {type:"DMS", lat, lon};
+  }
 
-  let E=(idx%5)*100000 + Number(g[2]) * scale;
-  let N=Math.floor(idx/5)*100000 + Number(g[3]) * scale;
+  // Irish Grid
+  let g = input.match(/^([A-Z])\s*(\d{2,5})\s*(\d{2,5})$/);
+  if(g){
+    const letters="VWXYZQRSTULMNOPFGHJKABCDE";
+    let idx = letters.indexOf(g[1]);
+    if(idx < 0) return null;
 
-  let c=proj4("EPSG:29903","EPSG:4326",[E,N]);
+    let scale = Math.pow(10, 5 - g[2].length);
 
-  return {type:"IRISH_GRID",lat:c[1],lon:c[0]};
-}
+    let E = (idx%5)*100000 + Number(g[2])*scale;
+    let N = Math.floor(idx/5)*100000 + Number(g[3])*scale;
 
-return null;
+    let c = proj4("EPSG:29903","EPSG:4326",[E,N]);
+    return {type:"IRISH_GRID", lat:c[1], lon:c[0]};
+  }
+
+  return null;
 }
 
 async function resolveEircode(code){
- const q=encodeURIComponent(code+", Ireland");
+  const q = encodeURIComponent(code + ", Ireland");
 
- try{
-  let g=await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${q}&key=AIzaSyBA7CuGaDt3OZPiUvPOYHXLvcfvOZA9vLk`);
-  let gd=await g.json();
-  if(gd.status==='OK'&&gd.results?.length){
-   let l=gd.results[0].geometry.location;
-   return{lat:l.lat,lon:l.lng,src:"Google"};
+  try{
+    // ⚠️ SECURITY: exposing API key in frontend is unsafe
+    let g = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${q}&key=AIzaSyBA7CuGaDt3OZPiUvPOYHXLvcfvOZA9vLk`);
+    let gd = await g.json();
+
+    if(gd.status==='OK' && gd.results?.length){
+      let l = gd.results[0].geometry.location;
+      return {lat:l.lat, lon:l.lng, src:"Google"};
+    }
+  }catch(e){}
+
+  let o = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`);
+  let od = await o.json();
+
+  if(od?.length){
+    return {lat:+od[0].lat, lon:+od[0].lon, src:"OSM"};
   }
- }catch(e){}
 
- let o=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`);
- let od=await o.json();
- if(od?.length){
-  return{lat:+od[0].lat,lon:+od[0].lon,src:"OSM"};
- }
- return null;
+  return null;
 }
 
 async function convert(){
-  try {
-
+  try{
     let r = parse(input.value);
 
     if(!r){
@@ -251,29 +156,40 @@ async function convert(){
   }
 }
 
- updateMap(r.lat,r.lon,r.type);
-}
+function updateMap(lat, lon, type){
+  let g = proj4("EPSG:4326","EPSG:29903",[lon,lat]);
+  let E = g[0], N = g[1];
 
-function updateMap(lat,lon,type){
- let g=proj4("EPSG:4326","EPSG:29903",[lon,lat]);
- let E=g[0],N=g[1];
+  let grid = `${getGridLetter(E,N)} ${Math.round(E%100000).toString().padStart(5,'0')} ${Math.round(N%100000).toString().padStart(5,'0')}`;
 
- let grid=`${getGridLetter(E,N)} ${Math.round(E%100000).toString().padStart(5,'0')} ${Math.round(N%100000).toString().padStart(5,'0')}`;
+  result.innerHTML = `
+    <div class="result">
+      <b>Detected:</b> ${type}
 
- result.innerHTML=`<div class="result"><b>Detected:</b> ${type}<div class="section-title">Irish Grid</div><div class="grid">${grid}</div><div class="section-title">Decimal</div><div class="coord">${lat.toFixed(6)}, ${lon.toFixed(6)}</div><div class="section-title">DMS</div><div class="coord">${toDMS(lat,true)}<br>${toDMS(lon,false)}</div><div class="section-title">DDM</div><div class="coord">${toDMM(lat,true)}<br>${toDMM(lon,false)}</div></div>`;
+      <div class="section-title">Irish Grid</div>
+      <div class="grid">${grid}</div>
 
- map.setView([lat,lon],13);
- if(marker)marker.setLatLng([lat,lon]);
- else marker=L.marker([lat,lon]).addTo(map);
+      <div class="section-title">Decimal</div>
+      <div class="coord">${lat.toFixed(6)}, ${lon.toFixed(6)}</div>
+
+      <div class="section-title">DMS</div>
+      <div class="coord">${toDMS(lat,true)}<br>${toDMS(lon,false)}</div>
+
+      <div class="section-title">DDM</div>
+      <div class="coord">${toDMM(lat,true)}<br>${toDMM(lon,false)}</div>
+    </div>
+  `;
+
+  map.setView([lat,lon],13);
+
+  if(marker) marker.setLatLng([lat,lon]);
+  else marker = L.marker([lat,lon]).addTo(map);
 }
 
 function resetTool(){
- input.value="";
- result.innerHTML="";
- if(marker){map.removeLayer(marker);marker=null;}
- map.setView([53.5,-8],7);
+  input.value = "";
+  result.innerHTML = "";
+  if(marker){ map.removeLayer(marker); marker=null; }
+  map.setView([53.5,-8],7);
 }
-
 </script>
-</body>
-</html>
