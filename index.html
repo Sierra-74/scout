@@ -340,7 +340,13 @@ function parse(input){
         .replace(/[°'"]/g," ")
         .replace(/\s+/g," ")
         .trim();
+// ✅ EIRCODE DETECTION (FIRST CHECK)
+let eircodeMatch = input.match(/^[A-Z0-9]{3}\s?[A-Z0-9]{4}$/);
 
+if(eircodeMatch){
+    return { type: "EIRCODE", value: input.replace(" ","") };
+}
+``
     // ✅ DECIMAL (robust - handles split & normal safely)
 let parts = input.split(" ");
 
@@ -472,6 +478,67 @@ if(t.length >= 6 && /^[0-9]+$/.test(t[0])){
 function convert(){
 
  let res=parse(input.value);
+  // ✅ EIRCODE HANDLING (GOOGLE API)
+if(res && res.type === "EIRCODE"){
+
+  fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${res.value},Ireland&key=AIzaSyBA7CuGaDt3OZPiUvPOYHXLvcfvOZA9vLk`)
+  .then(r => r.json())
+  .then(data => {
+
+    if(data.results && data.results.length){
+
+      let lat = data.results[0].geometry.location.lat;
+      let lon = data.results[0].geometry.location.lng;
+
+      // ✅ Continue using your existing logic
+      let g=proj4("EPSG:4326","EPSG:29903",[lon,lat]);
+      let E=g[0]+50, N=g[1]-19;
+
+      let easting = Math.round(E % 100000).toString().padStart(5,'0');
+      let northing = Math.round(N % 100000).toString().padStart(5,'0');
+
+      let grid = `${getGridLetter(E,N)} ${easting} ${northing}`;
+
+      result.innerHTML=`
+<div class="result">
+
+<b>Detected:</b> Eircode
+
+<div class="section-title">Irish Grid</div>
+<div class="grid">${grid}</div>
+
+<div class="section-title">Decimal (DD)</div>
+<div class="coord">${lat.toFixed(6)}, ${lon.toFixed(6)}</div>
+
+<div class="section-title">DMS</div>
+<div class="coord">${toDMS(lat,true)}<br>${toDMS(lon,false)}</div>
+
+<div class="section-title">DDM</div>
+<div class="coord">${toDMM(lat,true)}<br>${toDMM(lon,false)}</div>
+
+<div class="actions">
+  <button onclick="openMaps(${lat},${lon})">📍 Open in Google Maps</button>
+  <button onclick="shareWhatsApp(${lat},${lon})">📤 Share via WhatsApp</button>
+  <button onclick="saveScreenshot()">📸 Screenshot</button>
+</div>
+
+</div>
+`;
+
+      map.setView([lat,lon],13);
+      if(marker) marker.setLatLng([lat,lon]);
+      else marker=L.marker([lat,lon]).addTo(map);
+
+    } else {
+      result.innerHTML="❌ Eircode not found";
+    }
+
+  })
+  .catch(()=> result.innerHTML="❌ Lookup failed");
+
+  return;
+}
+
 
  if(!res){
   result.innerHTML="❌ Invalid input";
