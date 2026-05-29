@@ -329,9 +329,11 @@ function parse(raw){
     .replace(/\s+/g, " ")
     .trim();
 
-  // ------------------------
-  // Eircode
-  // ------------------------
+  // --------------------------------
+  // EIRCODE
+  // Example:
+  // D02 X285
+  // --------------------------------
 
   const eircode =
     cleaned.match(/^[A-Z0-9]{3}\s?[A-Z0-9]{4}$/);
@@ -344,20 +346,96 @@ function parse(raw){
     };
   }
 
-  // ------------------------
-  // Decimal Degrees
-  // ------------------------
+  // --------------------------------
+  // IRISH GRID
+  // Examples:
+  // R888 588
+  // R 88888 58888
+  // --------------------------------
 
-  const parts = cleaned.split(" ");
+  const gridMatch =
+    cleaned.match(/^([A-Z])\s*(\d{2,5})\s*(\d{2,5})$/);
 
-  if(
-    parts.length === 2 &&
-    !isNaN(parts[0]) &&
-    !isNaN(parts[1])
-  ){
+  if(gridMatch){
 
-    const lat = parseFloat(parts[0]);
-    const lon = parseFloat(parts[1]);
+    const letter = gridMatch[1];
+
+    let east = gridMatch[2];
+    let north = gridMatch[3];
+
+    east = east.padEnd(5, "0");
+    north = north.padEnd(5, "0");
+
+    const gridLetters = {
+
+      A:[0,0],
+      B:[100000,0],
+      C:[200000,0],
+      D:[300000,0],
+      E:[400000,0],
+
+      F:[0,100000],
+      G:[100000,100000],
+      H:[200000,100000],
+      J:[300000,100000],
+      K:[400000,100000],
+
+      L:[0,200000],
+      M:[100000,200000],
+      N:[200000,200000],
+      O:[300000,200000],
+      P:[400000,200000],
+
+      Q:[0,300000],
+      R:[100000,300000],
+      S:[200000,300000],
+      T:[300000,300000],
+      U:[400000,300000],
+
+      V:[0,400000],
+      W:[100000,400000],
+      X:[200000,400000],
+      Y:[300000,400000],
+      Z:[400000,400000]
+    };
+
+    if(gridLetters[letter]){
+
+      const offset = gridLetters[letter];
+
+      const E = offset[0] + parseInt(east);
+      const N = offset[1] + parseInt(north);
+
+      const result =
+        proj4(
+          "EPSG:29903",
+          "EPSG:4326",
+          [E, N]
+        );
+
+      return {
+        type:"Irish Grid",
+        lat: result[1],
+        lon: result[0]
+      };
+    }
+  }
+
+  // --------------------------------
+  // DECIMAL DEGREES (DD)
+  // Example:
+  // 53.3498 -6.2603
+  // --------------------------------
+
+  const dd =
+    cleaned.match(
+      /^(-?\d+\.?\d*)\s+(-?\d+\.?\d*)$/
+    );
+
+  if(dd){
+
+    const lat = parseFloat(dd[1]);
+    const lon = parseFloat(dd[2]);
 
     if(
       lat >= -90 &&
@@ -374,13 +452,72 @@ function parse(raw){
     }
   }
 
+  // --------------------------------
+  // DDM
+  // Example:
+  // 53 20.988 N 6 15.618 W
+  // --------------------------------
+
+  const ddm =
+    cleaned.match(
+      /^(\d+)\s+(\d+\.?\d*)\s*([NS])\s+(\d+)\s+(\d+\.?\d*)\s*([EW])$/
+    );
+
+  if(ddm){
+
+    let lat =
+      parseInt(ddm[1]) +
+      parseFloat(ddm[2]) / 60;
+
+    let lon =
+      parseInt(ddm[4]) +
+      parseFloat(ddm[5]) / 60;
+
+    if(ddm[3] === "S") lat *= -1;
+    if(ddm[6] === "W") lon *= -1;
+
+    return {
+      type:"DDM",
+      lat,
+      lon
+    };
+  }
+
+  // --------------------------------
+  // DMS
+  // Example:
+  // 53 20 59 N 6 15 37 W
+  // --------------------------------
+
+  const dms =
+    cleaned.match(
+      /^(\d+)\s+(\d+)\s+(\d+\.?\d*)\s*([NS])\s+(\d+)\s+(\d+)\s+(\d+\.?\d*)\s*([EW])$/
+    );
+
+  if(dms){
+
+    let lat =
+      parseInt(dms[1]) +
+      parseInt(dms[2]) / 60 +
+      parseFloat(dms[3]) / 3600;
+
+    let lon =
+      parseInt(dms[5]) +
+      parseInt(dms[6]) / 60 +
+      parseFloat(dms[7]) / 3600;
+
+    if(dms[4] === "S") lat *= -1;
+    if(dms[8] === "W") lon *= -1;
+
+    return {
+      type:"DMS",
+      lat,
+      lon
+    };
+  }
+
   return null;
 }
-
-// ----------------------------
-// Display Results
-// ----------------------------
-
 function display(lat, lon, type){
 
   const projected =
