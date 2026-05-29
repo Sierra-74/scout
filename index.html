@@ -132,11 +132,6 @@ window.addEventListener("load", () => {
   }).addTo(map);
 });
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  crossOrigin: true
-}).addTo(map);
-
-let marker;
 
 // FORMATTERS
 function toDMS(d,lat){
@@ -310,15 +305,11 @@ if(res && res.type === "EIRCODE"){
 
   const query = encodeURIComponent(res.value + ", Ireland");
 
-  // 🔵 GOOGLE FIRST
-  fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=AIzaSyBA7CuGaDt3OZPiUvPOYHXLvcfvOZA9vLk`)
+  fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=YOUR_API_KEY`)
     .then(r => r.json())
     .then(data => {
 
-      console.log("Google response:", data);
-
-      // VALID GOOGLE RESULT
-      if(data.status === "OK" && data.results && data.results.length){
+      if(data.status === "OK" && data.results?.length){
 
         let lat = data.results[0].geometry.location.lat;
         let lon = data.results[0].geometry.location.lng;
@@ -327,6 +318,27 @@ if(res && res.type === "EIRCODE"){
         return;
       }
 
+      return fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+
+    })
+    .then(r => r ? r.json() : null)
+    .then(data => {
+
+      if(!data || !data.length){
+        result.innerHTML = "❌ Eircode not found";
+        return;
+      }
+
+      updateMap(parseFloat(data[0].lat), parseFloat(data[0].lon), "Eircode (OSM)");
+
+    })
+    .catch(err => {
+      console.error(err);
+      result.innerHTML = "❌ Lookup failed";
+    });
+
+  return;
+}
       // 🟡 FALLBACK → OSM
       return fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
 
