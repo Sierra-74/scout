@@ -482,17 +482,22 @@ let res=parse(input.value);
 // ✅ EIRCODE HANDLING (ASYNC)
 if(res && res.type === "EIRCODE"){
 
-  fetch(`https://nominatim.openstreetmap.org/search?q=${res.value}&format=json`)
+  fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${res.value}&key=AIzaSyBA7CuGaDt3OZPiUvPOYHXLvcfvOZA9vLk`)
   .then(r => r.json())
   .then(data => {
 
-    if(data.length){
+  if(data.results && data.results.length){
 
-      let lat = parseFloat(data[0].lat);
-      let lon = parseFloat(data[0].lon);
+    let lat = data.results[0].geometry.location.lat;
+    let lon = data.results[0].geometry.location.lng;
 
-      // ✅ feed into existing workflow manually
-      displayResult(lat, lon, "Eircode");
+    displayResult(lat, lon, "Eircode");
+
+  } else {
+    result.innerHTML="❌ Eircode not found";
+  }
+
+})
 
     } else {
       result.innerHTML="❌ Eircode not found";
