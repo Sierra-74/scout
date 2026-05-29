@@ -299,13 +299,54 @@ if(!res){
 // EIRCODE HANDLING
 if(res && res.type === "EIRCODE"){
 
-  const apiKey = "https://ws.postcoder.com/pcw/{apikey}/position/{countrycode}/{postcode}";
+  const query = encodeURIComponent(res.value + ", Ireland");
 
-  fetch(`https://ws.postcoder.com/pcw/${apiKey}/position/ie/${encodeURIComponent(res.value)}`)
+  // 1️⃣ GOOGLE FIRST
+  fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${query}&key=AIzaSyBA7CuGaDt3OZPiUvPOYHXLvcfvOZA9vLk`)
     .then(r => r.json())
     .then(data => {
 
-      console.log("Postcoder response:", data);
+      if(data.status === "OK" && data.results.length){
+
+        let lat = data.results[0].geometry.location.lat;
+        let lon = data.results[0].geometry.location.lng;
+        updateMap(lat, lon, "Eircode (Google)");
+        return;
+      }
+
+      // 2️⃣ FALLBACK → OPENSTREETMAP
+      return fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+
+    })
+    .then(r => r ? r.json() : null)
+    .then(data => {
+
+      if(!data || data.length === 0) return;
+
+      let lat = parseFloat(data[0].lat);
+      let lon = parseFloat(data[0].lon);
+
+      updateMap(lat, lon, "Eircode (OSM fallback)");
+
+    })
+    .catch(() => {
+      result.innerHTML = "❌ Lookup failed";
+    });
+
+  return;
+}
+      let lat = parseFloat(data[0].lat);
+      let lon = parseFloat(data[0].lon);
+
+      updateMap(lat, lon, "Eircode");
+
+    })
+    .catch(() => {
+      result.innerHTML = "❌ Lookup failed";
+    });
+
+  return;
+}
 
       // ✅ VALIDATION
       if(!data || !data.latitude || !data.longitude){
