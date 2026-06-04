@@ -158,7 +158,8 @@ button:not(.reset) {
 
 <button onclick="convert()">Convert & Locate</button>
 <button class="reset" onclick="resetTool()">Reset</button>
-
+<button onclick="locateMe()">📍 Locate Me</button>
+  
 <div id="result"></div>
 <div id="map"></div>
 
@@ -559,6 +560,40 @@ function resetTool(){
  result.innerHTML="";
  if(marker){ map.removeLayer(marker); marker=null;}
  map.setView([53.5,-8],7);
+}
+function locateMe(){
+
+  if(!navigator.geolocation){
+    alert("Geolocation not supported");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    
+    function(position){
+
+      let lat = position.coords.latitude;
+      let lon = position.coords.longitude;
+
+      // ✅ MOVE MAP HERE (PUT IT RIGHT HERE)
+      map.setView([lat, lon], 16);
+
+      // ✅ fill input
+      input.value = `${lat} ${lon}`;
+
+      // ✅ run your convert (drops marker + outputs data)
+      convert();
+
+    },
+
+    function(error){
+      alert("Unable to get location");
+    },
+
+    {
+      enableHighAccuracy: true
+    }
+  );
 }
 
 </script>
