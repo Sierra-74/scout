@@ -348,29 +348,30 @@ let parts = input.split(" ");
 
 if(weirdDMM){
 
-function splitDegMin(v){
+function splitLat(v){
     let s = v.toString();
 
-    if(s.length === 4){
-        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
-    }
+    if(s.length === 4) return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
+    if(s.length === 3) return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
 
-    if(s.length === 3){
-        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
-    }
+    return [parseInt(s), 0];
+}
 
-    if(s.length === 2){
-        return [parseInt(s[0]), parseInt(s[1])];
-    }
+function splitLon(v){
+    let s = v.toString();
+
+    if(s.length === 3) return [parseInt(s.slice(0,1)), parseInt(s.slice(1))];
+    if(s.length === 4) return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
 
     return [parseInt(s), 0];
 }
 
 
-    let [dLat, mLat] = splitDegMin(weirdDMM[1]);
+
+    let [dLat, mLat] = splitLat(weirdDMM[1]);
     let secLat = parseFloat(weirdDMM[2]);
 
-    let [dLon, mLon] = splitDegMin(weirdDMM[4]);
+    let [dLon, mLon] = splitLon(weirdDMM[4]);
     let secLon = parseFloat(weirdDMM[5]);
 
     let lat = dLat + (mLat/60) + (secLat/3600);
