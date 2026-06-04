@@ -529,8 +529,12 @@ function openOutdoorActive(lat, lon){
 
   URL.revokeObjectURL(url);
   
-// ✅ 3. SHOW MESSAGE TO USER (PUT IT HERE)
-  alert("Open the downloaded GPX file in Outdooractive to see the casualty marker.");
+// ✅ ✅ ADD YOUR MESSAGE HERE (RIGHT AT THE END)
+  document.getElementById("result").insertAdjacentHTML(
+    "beforeend",
+    "<div style='margin-top:10px; font-size:14px;'>📥 Open the downloaded GPX file in Outdooractive to view the casualty marker.</div>"
+  );
+
 
 }
 
