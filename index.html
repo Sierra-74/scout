@@ -14,7 +14,7 @@
 body {
   margin:0;
   font-family: Arial, sans-serif;
-  background:#eef2f6;
+  background:#c7ccd1;
 }
 
 /* HEADER */
@@ -76,17 +76,26 @@ body {
 
 /* LAYOUT */
 .container {
-  max-width:650px;
-  margin:auto;
-  padding:15px;
+  border: 1px solid rgba(0,0,0,0.2);
+  max-width: 700px;
+  margin: 20px auto;
+  padding: 20px;
+
+  background: #dfe5ea;                 /* slight panel tone */
+  border-radius: 14px;
+
+  box-shadow:
+    0 12px 30px rgba(0,0,0,0.4),      /* outer depth */
+    inset 0 1px 0 rgba(255,255,255,0.4); /* top highlight */
 }
 
 .panel {
-  background:white;
-  padding:18px;
-  border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.15);
-  position:relative;
+  background: #ffffff;
+  border-radius: 10px;
+
+  box-shadow:
+    inset 0 1px 3px rgba(0,0,0,0.15),  /* inward shadow */
+    0 2px 6px rgba(0,0,0,0.2);         /* slight lift */
 }
 
 /* SIGNATURE */
