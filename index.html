@@ -351,17 +351,37 @@ if(weirdDMM){
 function splitLat(v){
     let s = v.toString();
 
-    if(s.length === 4) return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
-    if(s.length === 3) return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
+    // 4 digits: 5215 → 52° 15'
+    if(s.length === 4){
+        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
+    }
 
+    // 3 digits: 534 → 53° 4'
+    if(s.length === 3){
+        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
+    }
+
+    // fallback
     return [parseInt(s), 0];
 }
 
 function splitLon(v){
     let s = v.toString();
 
-    if(s.length === 3) return [parseInt(s.slice(0,1)), parseInt(s.slice(1))];
-    if(s.length === 4) return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
+    // 4 digits: 0833 → 8° 33'
+    if(s.length === 4){
+        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
+    }
+
+    // 3 digits: 616 → 6° 16'
+    if(s.length === 3){
+        return [parseInt(s.slice(0,1)), parseInt(s.slice(1))];
+    }
+
+    // 2 digits: 83 → 8° 3'
+    if(s.length === 2){
+        return [parseInt(s[0]), parseInt(s[1])];
+    }
 
     return [parseInt(s), 0];
 }
