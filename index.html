@@ -21,14 +21,17 @@ body {
 
 /* HEADER BASE */
 .header {
-  background: #1b2a33;              /* darker, more tactical */
+  background: linear-gradient(to bottom, #223844, #1b2a33);         /* darker, more tactical */
+  border-top: 2px solid #f5a623;
   border-bottom: 2px solid #f5a623; /* SAR accent line */
-  padding: 20px 0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  padding: 22px 0;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+  
 }
 
 /* INNER LAYOUT */
 .header-inner {
+  align-items: center;
   max-width: 700px;
   margin: auto;
   display: flex;
@@ -54,7 +57,7 @@ body {
 .title {
   font-size: 32px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-  line-height: 1.1; 
+  line-height: 1; 
   font-weight: 900;
   letter-spacing: 3px;
   color: #f5a623;
