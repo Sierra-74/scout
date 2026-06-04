@@ -12,10 +12,9 @@
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 body {
-  margin:0;
+  margin: 0;
   font-family: Arial, sans-serif;
-  
-body {
+
   background:
     linear-gradient(#cdd3d8, #bfc6cc),
     repeating-linear-gradient(
@@ -27,7 +26,6 @@ body {
     );
 }
 
-}
 
 /* HEADER */
 
@@ -115,12 +113,14 @@ body {
 
 .signature {
   position: absolute;
-  bottom: 12px;
-  right: 16px;
+  bottom: 14px;
+  right: 18px;
 
   font-size: 10px;
   letter-spacing: 1px;
   color: rgba(0,0,0,0.5);
+
+  text-shadow: 0 1px 0 rgba(255,255,255,0.4); /* subtle engraved feel */
 }
 
 
@@ -237,6 +237,8 @@ button:not(.reset) {
 <div id="map"></div>
 
 </div>
+
+  <div class="signature">S74</div>
 </div>
 
 <script>
