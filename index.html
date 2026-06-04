@@ -375,16 +375,52 @@ if(parts.length === 3 &&
 }
 
     // ✅ 2. DMM (N 52 29.10 W 6 44.81)
-    let dmm = input.match(/([NS])\s*(\d+)\s+([\d.]+)\s+([EW])\s*(\d+)\s+([\d.]+)/);
-    if(dmm){
-        let lat = (+dmm[2]) + (+dmm[3]/60);
-        let lon = (+dmm[5]) + (+dmm[6]/60);
+let dmm = input.match(/([NS])\s*(\d+)\s+([\d.]+)\s+([EW])\s*(\d+)\s+([\d.]+)/);
+if(dmm){
+    let lat = (+dmm[2]) + (+dmm[3]/60);
+    let lon = (+dmm[5]) + (+dmm[6]/60);
 
-        if(dmm[1]==="S") lat *= -1;
-        if(dmm[4]==="W") lon *= -1;
+    if(dmm[1]==="S") lat *= -1;
+    if(dmm[4]==="W") lon *= -1;
 
-        return { lat, lon, type:"DDM" };
+    return { lat, lon, type:"DDM" };
+}
+
+
+// ✅ ✅ ADD NEW CODE HERE ↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+
+let weirdDMM = input.match(/^(\d{3})\s+([\d.]+)\s+([NS])\s+(\d{3})\s+([\d.]+)\s+([EW])$/);
+
+if(weirdDMM){
+
+    function splitDegMin(v){
+        let s = v.toString();
+        return [parseInt(s.slice(0,-1)), parseInt(s.slice(-1))];
     }
+
+    let [dLat, mLat] = splitDegMin(weirdDMM[1]);
+    let secLat = parseFloat(weirdDMM[2]);
+
+    let [dLon, mLon] = splitDegMin(weirdDMM[4]);
+    let secLon = parseFloat(weirdDMM[5]);
+
+    let lat = dLat + (mLat/60) + (secLat/3600);
+    let lon = dLon + (mLon/60) + (secLon/3600);
+
+    if(weirdDMM[3] === "S") lat *= -1;
+    if(weirdDMM[6] === "W") lon *= -1;
+
+    return {
+        lat,
+        lon,
+        type: "DMS (Alt Format)"
+    };
+}
+
+
+// ✅ continue with rest of your parser ↓↓↓
+let t = input.split(" ");
+
 
     let t = input.split(" ");
 
