@@ -504,7 +504,8 @@ function openMaps(lat,lon){
 }
 
 function openOutdoorActive(lat, lon){
-  window.open(`https://www.outdooractive.com/en/poi/-/${lat},${lon}`);
+  let url = `https://www.outdooractive.com/en/map/?lat=${lat}&lon=${lon}&zoom=15`;
+  window.open(url, "_blank");
 }
 
 
