@@ -505,17 +505,18 @@ function openMaps(lat,lon){
 
 function openOutdoorActive(lat, lon){
 
-  // ✅ 1. Open map (terrain view)
+  // ✅ Open Outdooractive map
   window.open(
     `https://www.outdooractive.com/en/map/?center=${lat},${lon}&zoom=15`,
     "_blank"
   );
 
-  // ✅ 2. Download GPX (marker)
+  // ✅ Create valid GPX
   let gpx = `<?xml version="1.0" encoding="UTF-8"?>
 <gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="SCOUT">
   <wpt lat="${lat}" lon="${lon}">
     <name>Casualty</name>
+    <desc>SCOUT Location</desc>
   </wpt>
 </gpx>`;
 
@@ -528,28 +529,14 @@ function openOutdoorActive(lat, lon){
   a.click();
 
   URL.revokeObjectURL(url);
-  
-// ✅ ✅ ADD YOUR MESSAGE HERE (RIGHT AT THE END)
+
+  // ✅ Show message (clean, no duplicates)
+  document.querySelectorAll(".gpx-msg").forEach(e => e.remove());
+
   document.getElementById("result").insertAdjacentHTML(
     "beforeend",
-    "<div style='margin-top:10px; font-size:14px;'>📥 Open the downloaded GPX file in Outdooractive to view the casualty marker.</div>"
+    "<div class='gpx-msg' style='margin-top:10px; font-size:14px;'>📥 Open the downloaded GPX file in Outdooractive to view the casualty marker.</div>"
   );
-
-
-}
-
-
-  let blob = new Blob([gpx], { type: "application/gpx+xml" });
-  let url = URL.createObjectURL(blob);
-
-  let a = document.createElement("a");
-  a.href = url;
-  a.download = "SCOUT_Casualty.gpx";
-  document.body.appendChild(a);
-  a.click();
-
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 
