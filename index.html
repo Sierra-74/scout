@@ -19,39 +19,49 @@ body {
 
 /* HEADER */
 
+/* HEADER BASE */
 .header {
-  height: 130px;                 /* bigger */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #1f2f3a;
-  text-align: center;
+  background: #1b2a33;              /* darker, more tactical */
+  border-bottom: 2px solid #f5a623; /* SAR accent line */
+  padding: 12px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
-/* group icon + text */
+/* INNER LAYOUT */
 .header-inner {
+  max-width: 700px;
+  margin: auto;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
+  padding: 0 15px;
 }
 
-/* icon */
+/* ICON */
 .logo-icon {
-  height: 95px;    
-  filter: drop-shadow(0 3px 8px rgba(0,0,0,0.6));
-  /* BIGGER */
+  height: 85px;
+  min-width: 85px;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6));
 }
 
-/* text */
+/* TEXT BLOCK */
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+/* MAIN TITLE */
 .title {
-  font-size: 32px;              /* BIG jump */
-  font-weight: bold;
+  font-size: 30px;
+  font-weight: 800;
   letter-spacing: 3px;
   color: #f5a623;
 }
 
+/* SUBTITLE (more tactical look) */
 .subtitle {
-  font-size: 14px;
+  font-size: 12px;
+  letter-spacing: 1px;
   color: #f5a623;
   opacity: 0.85;
 }
