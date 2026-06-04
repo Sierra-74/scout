@@ -505,12 +505,31 @@ function openMaps(lat,lon){
 
 function openOutdoorActive(lat, lon){
 
+  // ✅ 1. Open map (terrain view)
+  window.open(
+    `https://www.outdooractive.com/en/map/?center=${lat},${lon}&zoom=15`,
+    "_blank"
+  );
+
+  // ✅ 2. Download GPX (marker)
   let gpx = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="SCOUT">
+<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="SCOUT">
   <wpt lat="${lat}" lon="${lon}">
     <name>Casualty</name>
   </wpt>
 </gpx>`;
+
+  let blob = new Blob([gpx], { type: "application/gpx+xml" });
+  let url = URL.createObjectURL(blob);
+
+  let a = document.createElement("a");
+  a.href = url;
+  a.download = "Casualty.gpx";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
 
   let blob = new Blob([gpx], { type: "application/gpx+xml" });
   let url = URL.createObjectURL(blob);
