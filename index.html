@@ -20,20 +20,39 @@ body {
 /* HEADER */
 
 .header {
-  height: 160px;                 /* slightly bigger header */
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #1f2f3a;
-  padding: 10px 0;
+  gap: 15px;
 }
 
-.logo {
-  height: 140px !important;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
+/* icon (left side) */
+.logo-icon {
+  height: 70px;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
 }
 
+/* text block (right side) */
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
 
+/* main title */
+.title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #f5a623; /* SAR orange */
+}
+
+/* subtitle */
+.subtitle {
+  font-size: 12px;
+  color: #f5a623;
+}
 
 .title {
   font-size:22px;
@@ -153,9 +172,15 @@ button:not(.reset) {
 
 <body>
 
+  
 <div class="header">
-  <img src="scout-header.png" class="logo">
+  <img src="scout-header.png" class="logo-icon">
+  <div class="logo-text">
+    <div class="title">S.C.O.U.T.</div>
+    <div class="subtitle">Search Coordinate & Orientation Tool</div>
+  </div>
 </div>
+
 
 
 
