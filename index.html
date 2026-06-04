@@ -344,6 +344,48 @@ function parse(input){
     // ✅ DECIMAL (robust - handles split & normal safely)
 let parts = input.split(" ");
 
+  let weirdDMM = input.match(/(\d{3,4})\s+([\d.]+)\s+([NS])\s+(\d{2,4})\s+([\d.]+)\s+([EW])/);
+
+if(weirdDMM){
+
+function splitDegMin(v){
+    let s = v.toString();
+
+    if(s.length === 4){
+        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
+    }
+
+    if(s.length === 3){
+        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
+    }
+
+    if(s.length === 2){
+        return [parseInt(s[0]), parseInt(s[1])];
+    }
+
+    return [parseInt(s), 0];
+}
+
+
+    let [dLat, mLat] = splitDegMin(weirdDMM[1]);
+    let secLat = parseFloat(weirdDMM[2]);
+
+    let [dLon, mLon] = splitDegMin(weirdDMM[4]);
+    let secLon = parseFloat(weirdDMM[5]);
+
+    let lat = dLat + (mLat/60) + (secLat/3600);
+    let lon = dLon + (mLon/60) + (secLon/3600);
+
+    if(weirdDMM[3] === "S") lat *= -1;
+    if(weirdDMM[6] === "W") lon *= -1;
+
+    return {
+        lat,
+        lon,
+        type: "DMS (Alt Format)"
+    };
+} 
+
 // ✅ Case 1: normal decimal
 // e.g. 52.664597 -6.496500
 if(parts.length === 2 &&
@@ -387,51 +429,6 @@ if(dmm){
 }
 
 
-// ✅ ✅ ADD NEW CODE HERE ↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-
-let weirdDMM = input.match(/(\d{3,4})\s+([\d.]+)\s+([NS])\s+(\d{2,4})\s+([\d.]+)\s+([EW])/);
-
-if(weirdDMM){
-
-function splitDegMin(v){
-    let s = v.toString();
-
-    if(s.length === 4){
-        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
-    }
-
-    if(s.length === 3){
-        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
-    }
-
-    if(s.length === 2){
-        return [parseInt(s[0]), parseInt(s[1])];
-    }
-
-    return [parseInt(s), 0];
-}
-
-
-    let [dLat, mLat] = splitDegMin(weirdDMM[1]);
-    let secLat = parseFloat(weirdDMM[2]);
-
-    let [dLon, mLon] = splitDegMin(weirdDMM[4]);
-    let secLon = parseFloat(weirdDMM[5]);
-
-    let lat = dLat + (mLat/60) + (secLat/3600);
-    let lon = dLon + (mLon/60) + (secLon/3600);
-
-    if(weirdDMM[3] === "S") lat *= -1;
-    if(weirdDMM[6] === "W") lon *= -1;
-
-    return {
-        lat,
-        lon,
-        type: "DMS (Alt Format)"
-    };
-}
-
-
 // ✅ continue with rest of your parser ↓↓↓
 
     let t = input.split(" ");
@@ -447,9 +444,13 @@ function splitDegMin(v){
         return { lat, lon, type:"DMS" };
     }
 
-    // ✅ 4. COMPRESSED DMS (5215 7.26 N)
-// ✅ COMPRESSED DMS (ROBUST FIX)
-if(t.length >= 6 && /^[0-9]+$/.test(t[0])){
+
+// ✅ 4. COMPRESSED DMS (5215 7.26 N)
+if(
+  t.length >= 6 &&
+  /^[0-9]+$/.test(t[0]) &&
+  !(t[2] === "N" || t[2] === "S")   // ✅ ADD THIS HERE
+){
 
     function parseDM(value){
 
