@@ -504,7 +504,8 @@ function openMaps(lat,lon){
 }
 
 function openOutdoorActive(lat, lon){
-  window.open(`https://www.outdooractive.com/en/map/?center=${lat},${lon}&zoom=15`);
+  let url = `https://www.outdooractive.com/en/map/?center=${lat},${lon}&zoom=15&v=${Date.now()}`;
+  window.open(url, "_blank");
 }
 
 
