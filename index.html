@@ -504,11 +504,25 @@ function openMaps(lat,lon){
 }
 
 function openOutdoorActive(lat, lon){
-  window.open(
-    `https://www.outdooractive.com/mobile/en/map/?center=${lat},${lon}&zoom=15`,
-    "_blank",
-    "noopener,noreferrer"
-  );
+
+  let gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="SCOUT">
+  <wpt lat="${lat}" lon="${lon}">
+    <name>Casualty</name>
+  </wpt>
+</gpx>`;
+
+  let blob = new Blob([gpx], { type: "application/gpx+xml" });
+  let url = URL.createObjectURL(blob);
+
+  let a = document.createElement("a");
+  a.href = url;
+  a.download = "SCOUT_Casualty.gpx";
+  document.body.appendChild(a);
+  a.click();
+
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 
