@@ -485,7 +485,7 @@ result.innerHTML=`
 <div class="actions">
   <button onclick="openMaps(${lat},${lon})">📍 Open in Google Maps</button>
   
-<button onclick="openOutdoorActive(${lat},${lon})"> 🗺️ Open in Outdooractive</button>
+
   <button onclick="shareWhatsApp(${lat},${lon})">📤 Share via WhatsApp</button>
   <button onclick="saveScreenshot()">📸 Screenshot</button>
 </div>
@@ -502,43 +502,6 @@ result.innerHTML=`
 function openMaps(lat,lon){
  window.open(`https://maps.google.com/?q=${lat},${lon}`);
 }
-
-function openOutdoorActive(lat, lon){
-
-  // ✅ Open Outdooractive map
-  window.open(
-    `https://www.outdooractive.com/en/map/?center=${lat},${lon}&zoom=15`,
-    "_blank"
-  );
-
-  // ✅ Create valid GPX
-  let gpx = `<?xml version="1.0" encoding="UTF-8"?>
-<gpx xmlns="http://www.topografix.com/GPX/1/1" version="1.1" creator="SCOUT">
-  <wpt lat="${lat}" lon="${lon}">
-    <name>Casualty</name>
-    <desc>SCOUT Location</desc>
-  </wpt>
-</gpx>`;
-
-  let blob = new Blob([gpx], { type: "application/gpx+xml" });
-  let url = URL.createObjectURL(blob);
-
-  let a = document.createElement("a");
-  a.href = url;
-  a.download = "Casualty.gpx";
-  a.click();
-
-  URL.revokeObjectURL(url);
-
-  // ✅ Show message (clean, no duplicates)
-  document.querySelectorAll(".gpx-msg").forEach(e => e.remove());
-
-  document.getElementById("result").insertAdjacentHTML(
-    "beforeend",
-    "<div class='gpx-msg' style='margin-top:10px; font-size:14px;'>📥 Open the downloaded GPX file in Outdooractive to view the casualty marker.</div>"
-  );
-}
-
 
 
 function shareWhatsApp(lat, lon){
