@@ -92,6 +92,7 @@ body {
   max-width: 700px;
   margin: 20px auto;
   padding: 20px;
+  position: relative;
 
   background: #dfe5ea;                 /* slight panel tone */
   border-radius: 18px;
@@ -111,16 +112,17 @@ body {
 }
 
 /* SIGNATURE */
+
 .signature {
-  margin-top: 8px;
-  text-align: right;
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
 
   font-size: 10px;
   letter-spacing: 1px;
   color: rgba(0,0,0,0.5);
-
-  opacity: 0.8;
 }
+
 
 
 
@@ -223,7 +225,7 @@ button:not(.reset) {
 
 <div class="container">
 <div class="panel" id="captureArea">
-  <div class="signature">S74</div>
+  
   
 <textarea id="input" placeholder="Enter coordinates"></textarea>
 
