@@ -389,14 +389,28 @@ if(dmm){
 
 // ✅ ✅ ADD NEW CODE HERE ↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
-let weirdDMM = input.match(/^(\d{3,4})\s+([\d.]+)\s+([NS])\s+(\d{3,4})\s+([\d.]+)\s+([EW])$/);
+let weirdDMM = input.match(/(\d{3,4})\s+([\d.]+)\s+([NS])\s+(\d{2,4})\s+([\d.]+)\s+([EW])/);
 
 if(weirdDMM){
 
-    function splitDegMin(v){
-        let s = v.toString();
-        return [parseInt(s.slice(0,-1)), parseInt(s.slice(-1))];
+function splitDegMin(v){
+    let s = v.toString();
+
+    if(s.length === 4){
+        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
     }
+
+    if(s.length === 3){
+        return [parseInt(s.slice(0,2)), parseInt(s.slice(2))];
+    }
+
+    if(s.length === 2){
+        return [parseInt(s[0]), parseInt(s[1])];
+    }
+
+    return [parseInt(s), 0];
+}
+
 
     let [dLat, mLat] = splitDegMin(weirdDMM[1]);
     let secLat = parseFloat(weirdDMM[2]);
